@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image to Brand Pattern Generator V8</title>
+    <title>Image to Brand Pattern Generator V10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -60,19 +60,19 @@
         .picker-group {
             display: flex;
             flex-wrap: nowrap;
-            gap: 0.375rem; /* Tailwind: gap-1.5 */
+            gap: 0.375rem; /* Tailwind: gap-1.5 - Space between items */
             overflow-x: auto;
-            padding-bottom: 0.375rem;
+            padding: 0.125rem; /* Tailwind: p-0.5 (2px) - Gives space for shadow at edges */
             max-width: 100%;
-            align-items: center; /* Align items vertically */
+            align-items: center; 
         }
         .radio-label {
             display: flex;
             align-items: center;
-            justify-content: center; /* Center content for swatch-only */
-            padding: 0.25rem; /* Tailwind: p-1 - More compact for swatch-only */
-            min-width: 32px; /* Ensure a minimum tap area / width */
-            height: 32px;   /* Ensure a minimum tap area / height */
+            justify-content: center; 
+            padding: 0.25rem; /* Tailwind: p-1 */
+            min-width: 32px; 
+            height: 32px;   
             border: 1px solid #D1D5DB;
             border-radius: 0.375rem;
             cursor: pointer;
@@ -80,8 +80,8 @@
             background-color: #fff;
             white-space: nowrap;
         }
-        .radio-label.has-text { /* Add this class if label has text */
-             padding: 0.125rem 0.5rem; /* Revert to V7 padding if text is present */
+        .radio-label.has-text { 
+             padding: 0.125rem 0.5rem; 
         }
         .radio-label:hover {
             border-color: #9CA3AF;
@@ -95,19 +95,19 @@
         .radio-input:checked + .radio-label {
             border-color: #0C76FE;
             background-color: #e7f1ff;
-            box-shadow: 0 0 0 2px #0C76FE;
+            box-shadow: 0 0 0 2px #0C76FE; /* 2px outline */
         }
         .color-swatch {
-            width: 20px; /* Larger swatch as it's the main element */
+            width: 20px; 
             height: 20px;
-            border-radius: 0.25rem; /* Tailwind: rounded-md */
-            border: 1px solid rgba(0,0,0,0.1); /* Softer border for light colors */
+            border-radius: 0.25rem; 
+            border: 1px solid rgba(0,0,0,0.1); 
             flex-shrink: 0;
         }
-        .picker-name { /* Will be hidden for colors, used for resolution */
+        .picker-name { 
             font-size: 0.75rem; 
             line-height: 1rem; 
-            margin-left: 0.25rem; /* Add margin if text is present */
+            margin-left: 0.25rem; 
         }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -192,10 +192,10 @@
             { name: "Sky Blue", hex: "#BEDAE2" }, { name: "Orchid", hex: "#E57DE1" },
             { name: "Maroon", hex: "#65211A" }
         ];
-        const DOWNLOAD_MAX_DIMENSIONS = [ // Updated labels
+        const DOWNLOAD_MAX_DIMENSIONS = [ 
             { name: "Preview", value: 500 },
             { name: "HD", value: 1080 },
-            { name: "QHD", value: 1440 }, // QHD is more specific than 2K
+            { name: "QHD", value: 1440 }, 
             { name: "4K", value: 2160 },
             { name: "8K", value: 4320 }
         ];
@@ -234,11 +234,11 @@
         // --- Initialization ---
         function initialize() {
             BRAND_COLORS.forEach((color, index) => {
-                createColorRadioOption(bgColorPickerContainer, 'backgroundColor', color, index === 0, true); // isColor = true
-                createColorRadioOption(shapeColorPickerContainer, 'shapeColor', color, index === 1, true); // isColor = true
+                createColorRadioOption(bgColorPickerContainer, 'backgroundColor', color, index === 0); 
+                createColorRadioOption(shapeColorPickerContainer, 'shapeColor', color, index === 1); 
             });
             DOWNLOAD_MAX_DIMENSIONS.forEach((res, index) => {
-                createResolutionRadioOption(downloadResolutionPickerContainer, 'downloadMaxDimension', res, index === 0, false); // isColor = false
+                createResolutionRadioOption(downloadResolutionPickerContainer, 'downloadMaxDimension', res, index === 0); 
             });
             
             outputCanvasContainer.style.setProperty('--output-canvas-display-max-width', `${OUTPUT_CANVAS_DISPLAY_MAX_DIM}px`);
@@ -247,13 +247,13 @@
             outputCanvas.height = OUTPUT_CANVAS_DISPLAY_MAX_DIM;
 
             addEventListeners();
-            updateSliderValueDisplays(); // Initial call
-            enforceMinMaxScaleLogic(); // Initial call
+            updateSliderValueDisplays(); 
+            enforceMinMaxScaleLogic(); 
             generatePatternForDisplay();
         }
 
         function createRadioOptionBase(container, name, optionData, isChecked, isColorOption) {
-            const radioId = `${name}_${isColorOption ? optionData.hex : optionData.value}`;
+            const radioId = `${name}_${isColorOption ? optionData.hex.replace('#', '') : optionData.value}`; // Ensure ID is valid
             const radioInput = document.createElement('input');
             radioInput.type = 'radio'; radioInput.id = radioId; radioInput.name = name;
             radioInput.value = isColorOption ? optionData.hex : optionData.value;
@@ -262,7 +262,7 @@
             
             if (name === 'backgroundColor' || name === 'shapeColor') {
                 radioInput.addEventListener('change', generatePatternForDisplay);
-            } // Resolution change doesn't need to trigger redraw of preview
+            }
 
             const radioLabel = document.createElement('label');
             radioLabel.htmlFor = radioId;
@@ -270,10 +270,9 @@
             
             let labelContent = '';
             if (isColorOption) {
-                labelContent = `<span class="color-swatch" style="background-color:${optionData.hex};"></span>`;
-                // No text for color options
+                labelContent = `<span class="color-swatch" style="background-color:${optionData.hex};" title="${optionData.name}"></span>`; // Added title for accessibility
             } else {
-                radioLabel.classList.add('has-text'); // Add class for styling text-based radio
+                radioLabel.classList.add('has-text'); 
                 labelContent = `<span class="picker-name">${optionData.name}</span>`;
             }
             radioLabel.innerHTML = labelContent;
@@ -294,13 +293,13 @@
             let maxVal = parseFloat(maxShapeScaleSlider.value);
 
             if (minVal > maxVal) {
-                if (this === minShapeScaleSlider) { // If min slider caused the overlap
+                if (this === minShapeScaleSlider) { 
                     maxShapeScaleSlider.value = minVal;
-                } else { // If max slider caused the overlap
+                } else { 
                     minShapeScaleSlider.value = maxVal;
                 }
             }
-            updateSliderValueDisplays(); // Update display after enforcing
+            updateSliderValueDisplays(); 
         }
 
 
@@ -313,13 +312,12 @@
                 generatePatternForDisplay();
             }));
             
-            // Specific listeners for min/max scale sliders
             minShapeScaleSlider.addEventListener('input', () => {
-                enforceMinMaxScaleLogic.call(minShapeScaleSlider); // Use .call to set 'this'
+                enforceMinMaxScaleLogic.call(minShapeScaleSlider); 
                 generatePatternForDisplay();
             });
             maxShapeScaleSlider.addEventListener('input', () => {
-                enforceMinMaxScaleLogic.call(maxShapeScaleSlider); // Use .call to set 'this'
+                enforceMinMaxScaleLogic.call(maxShapeScaleSlider); 
                 generatePatternForDisplay();
             });
 
@@ -425,7 +423,8 @@
                 targetCtx.fillStyle = "#999";
                 targetCtx.font = `${Math.min(20, canvasWidth / 25)}px Inter`;
                 targetCtx.textAlign = "center";
-                targetCtx.fillText("Upload an image", canvasWidth / 2, canvasHeight / 2);
+                // Changed placeholder text
+                targetCtx.fillText("Pattern will appear here", canvasWidth / 2, canvasHeight / 2);
                 return;
             }
             
@@ -453,7 +452,6 @@
                         else if (randomness >= 0.99) drawCircle = true;
 
                         const brightnessFactor = Math.max(0, (brightnessThreshold - brightness)) / brightnessThreshold;
-                        // Ensure minScale is not greater than maxScale before interpolation
                         const actualMinScale = Math.min(minScale, maxScale);
                         const actualMaxScale = Math.max(minScale, maxScale);
                         const currentShapeScaleRatio = actualMinScale + brightnessFactor * (actualMaxScale - actualMinScale);
