@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image to Brand Pattern Generator V4</title>
+    <title>Image to Brand Pattern Generator V8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -11,25 +11,33 @@
             overscroll-behavior: none;
         }
         .drag-over {
-            border-color: #0C76FE; /* Corrected Optimist Blue */
-            background-color: #e7f1ff; /* Lighter version of new Optimist Blue */
+            border-color: #0C76FE; /* Optimist Blue */
+            background-color: #e7f1ff;
         }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #c4c4c4; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
 
+        #outputCanvasContainer {
+            width: 100%;
+            max-width: var(--output-canvas-display-max-width, 500px);
+            max-height: var(--output-canvas-display-max-height, 500px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         #outputCanvas {
             max-width: 100%;
+            max-height: 100%;
             height: auto;
-            aspect-ratio: 1 / 1;
         }
         .controls-container label.control-label {
             font-weight: 500;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.25rem; /* Tailwind: mb-1 */
             display: block;
-            font-size: 0.875rem;
-            color: #374151;
+            font-size: 0.875rem; /* Tailwind: text-sm */
+            color: #374151; /* Tailwind: text-slate-700 */
         }
         .slider {
             -webkit-appearance: none; width: 100%; height: 8px;
@@ -40,53 +48,66 @@
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none; appearance: none;
             width: 18px; height: 18px; border-radius: 50%;
-            background: #0C76FE; /* Corrected Optimist Blue */
+            background: #0C76FE;
             cursor: pointer;
         }
         .slider::-moz-range-thumb {
             width: 18px; height: 18px; border-radius: 50%;
-            background: #0C76FE; /* Corrected Optimist Blue */
+            background: #0C76FE;
             cursor: pointer; border: none;
         }
         
-        .picker-group { /* Renamed from color-picker-group for generality */
+        .picker-group {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
+            flex-wrap: nowrap;
+            gap: 0.375rem; /* Tailwind: gap-1.5 */
+            overflow-x: auto;
+            padding-bottom: 0.375rem;
+            max-width: 100%;
+            align-items: center; /* Align items vertically */
         }
-        .radio-label { /* Renamed from color-radio-label */
+        .radio-label {
             display: flex;
             align-items: center;
-            padding: 0.375rem 0.75rem;
+            justify-content: center; /* Center content for swatch-only */
+            padding: 0.25rem; /* Tailwind: p-1 - More compact for swatch-only */
+            min-width: 32px; /* Ensure a minimum tap area / width */
+            height: 32px;   /* Ensure a minimum tap area / height */
             border: 1px solid #D1D5DB;
             border-radius: 0.375rem;
             cursor: pointer;
             transition: all 0.2s ease-in-out;
             background-color: #fff;
+            white-space: nowrap;
+        }
+        .radio-label.has-text { /* Add this class if label has text */
+             padding: 0.125rem 0.5rem; /* Revert to V7 padding if text is present */
         }
         .radio-label:hover {
             border-color: #9CA3AF;
         }
-        .radio-input { /* Renamed from color-radio-input */
+        .radio-input {
             opacity: 0;
             width: 0;
             height: 0;
             position: absolute;
         }
         .radio-input:checked + .radio-label {
-            border-color: #0C76FE; /* Corrected Optimist Blue */
-            background-color: #e7f1ff; /* Lighter version for checked state */
+            border-color: #0C76FE;
+            background-color: #e7f1ff;
             box-shadow: 0 0 0 2px #0C76FE;
         }
-        .color-swatch { /* Specific to color pickers */
-            width: 18px;
-            height: 18px;
-            border-radius: 0.25rem;
-            margin-right: 0.5rem;
-            border: 1px solid rgba(0,0,0,0.2);
+        .color-swatch {
+            width: 20px; /* Larger swatch as it's the main element */
+            height: 20px;
+            border-radius: 0.25rem; /* Tailwind: rounded-md */
+            border: 1px solid rgba(0,0,0,0.1); /* Softer border for light colors */
+            flex-shrink: 0;
         }
-        .picker-name { /* Renamed from color-name for generality */
-            font-size: 0.875rem;
+        .picker-name { /* Will be hidden for colors, used for resolution */
+            font-size: 0.75rem; 
+            line-height: 1rem; 
+            margin-left: 0.25rem; /* Add margin if text is present */
         }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -95,15 +116,15 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-sky-300 selection:text-sky-900">
 
-    <div class="w-full max-w-6xl bg-white shadow-2xl rounded-xl p-6 md:p-8">
+    <div class="w-full max-w-7xl bg-white shadow-2xl rounded-xl p-6 md:p-8">
         <header class="mb-6 md:mb-8 text-center">
             <h1 class="text-3xl md:text-4xl font-bold text-slate-700">Brand Pattern Generator</h1>
             <p class="text-slate-500 mt-1">Upload an image and customize your pattern.</p>
         </header>
 
-        <div class="controls-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-6 mb-6 md:mb-8 p-4 bg-slate-50 rounded-lg shadow">
+        <div class="controls-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4 mb-6 md:mb-8 p-4 bg-slate-50 rounded-lg shadow">
             <div>
-                <label for="patternDensitySlider" class="control-label">Pattern Density (<span id="patternDensityValue">50</span> cells)</label>
+                <label for="patternDensitySlider" class="control-label">Pattern Density (<span id="patternDensityValue">50</span> cells/width)</label>
                 <input type="range" id="patternDensitySlider" min="1" max="200" value="50" class="slider w-full">
             </div>
             <div>
@@ -114,26 +135,31 @@
                 <label for="brightnessThresholdSlider" class="control-label">Shape Sensitivity (<span id="brightnessThresholdValue">180</span>)</label>
                 <input type="range" id="brightnessThresholdSlider" min="0" max="255" value="180" class="slider w-full">
             </div>
+            <div>
+                <label for="minShapeScaleSlider" class="control-label">Shape Scale (Min: <span id="minShapeScaleValue">0.10</span>)</label>
+                <input type="range" id="minShapeScaleSlider" min="0.01" max="1.0" value="0.1" step="0.01" class="slider w-full">
+            </div>
+            <div>
+                <label for="maxShapeScaleSlider" class="control-label">Shape Scale (Max: <span id="maxShapeScaleValue">0.90</span>)</label>
+                <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.9" step="0.01" class="slider w-full">
+            </div>
             
-            <div class="lg:col-span-1">
+            <div class="sm:col-span-1">
                 <label class="control-label">Background Color</label>
-                <div id="bgColorPickerContainer" class="picker-group">
-                </div>
+                <div id="bgColorPickerContainer" class="picker-group"></div>
             </div>
-            <div class="lg:col-span-1">
+            <div class="sm:col-span-1">
                 <label class="control-label">Shape Color</label>
-                <div id="shapeColorPickerContainer" class="picker-group">
-                </div>
+                <div id="shapeColorPickerContainer" class="picker-group"></div>
             </div>
-            <div class="lg:col-span-1">
+            <div class="sm:col-span-1">
                 <label class="control-label">Download Resolution</label>
-                <div id="downloadResolutionPickerContainer" class="picker-group">
-                </div>
+                <div id="downloadResolutionPickerContainer" class="picker-group"></div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            <div class="h-64 md:h-96 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-sky-500 transition-colors bg-slate-50" id="dropZone">
+            <div class="h-72 md:h-auto md:aspect-[4/3] flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-sky-500 transition-colors bg-slate-50" id="dropZone">
                 <input type="file" id="imageUploadInput" class="hidden" accept="image/*">
                 <div id="dropZoneContent">
                     <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
@@ -145,7 +171,7 @@
                 <img id="imagePreview" src="#" alt="Image Preview" class="hidden max-h-full max-w-full rounded"/>
             </div>
 
-            <div class="h-64 md:h-96 flex items-center justify-center bg-slate-200 rounded-lg overflow-hidden shadow-inner">
+            <div id="outputCanvasContainer" class="h-72 md:h-auto md:aspect-[4/3] flex items-center justify-center bg-slate-200 rounded-lg overflow-hidden shadow-inner">
                 <canvas id="outputCanvas" class="border border-slate-300 rounded"></canvas>
             </div>
         </div>
@@ -161,19 +187,19 @@
         // --- Configuration ---
         const BRAND_COLORS = [
             { name: "White", hex: "#FFFFFF" }, { name: "Black", hex: "#0F0F0F" },
-            { name: "Midnight Blue", hex: "#24248E" }, { name: "Optimist Blue", hex: "#0C76FE" }, // Corrected HEX
+            { name: "Midnight Blue", hex: "#24248E" }, { name: "Optimist Blue", hex: "#0C76FE" },
             { name: "Tech Yellow", hex: "#DCF56B" }, { name: "Wheat", hex: "#E3CFA8" },
             { name: "Sky Blue", hex: "#BEDAE2" }, { name: "Orchid", hex: "#E57DE1" },
             { name: "Maroon", hex: "#65211A" }
         ];
-        const DOWNLOAD_RESOLUTIONS = [
-            { name: "Display (500px)", value: 500 },
-            { name: "HD (1080px)", value: 1080 },
-            { name: "QHD (1440px)", value: 1440 },
-            { name: "4K UHD (2160px)", value: 2160 },
-            { name: "8K UHD (4320px)", value: 4320 }
+        const DOWNLOAD_MAX_DIMENSIONS = [ // Updated labels
+            { name: "Preview", value: 500 },
+            { name: "HD", value: 1080 },
+            { name: "QHD", value: 1440 }, // QHD is more specific than 2K
+            { name: "4K", value: 2160 },
+            { name: "8K", value: 4320 }
         ];
-        const OUTPUT_CANVAS_DISPLAY_SIZE = 500;
+        const OUTPUT_CANVAS_DISPLAY_MAX_DIM = 500;
 
         // --- DOM Elements ---
         const patternDensitySlider = document.getElementById('patternDensitySlider');
@@ -182,6 +208,10 @@
         const randomnessValueDisplay = document.getElementById('randomnessValue');
         const brightnessThresholdSlider = document.getElementById('brightnessThresholdSlider');
         const brightnessThresholdValueDisplay = document.getElementById('brightnessThresholdValue');
+        const minShapeScaleSlider = document.getElementById('minShapeScaleSlider');
+        const minShapeScaleValueDisplay = document.getElementById('minShapeScaleValue');
+        const maxShapeScaleSlider = document.getElementById('maxShapeScaleSlider');
+        const maxShapeScaleValueDisplay = document.getElementById('maxShapeScaleValue');
         
         const bgColorPickerContainer = document.getElementById('bgColorPickerContainer');
         const shapeColorPickerContainer = document.getElementById('shapeColorPickerContainer');
@@ -191,93 +221,116 @@
         const dropZone = document.getElementById('dropZone');
         const dropZoneContent = document.getElementById('dropZoneContent');
         const imagePreview = document.getElementById('imagePreview');
+        const outputCanvasContainer = document.getElementById('outputCanvasContainer');
         const outputCanvas = document.getElementById('outputCanvas');
         const outputCtx = outputCanvas.getContext('2d');
         const downloadButton = document.getElementById('downloadButton');
 
         let originalImage = null;
+        let originalImageAspectRatio = 1;
         let offscreenImageCanvas = document.createElement('canvas');
         let offscreenImageCtx = offscreenImageCanvas.getContext('2d');
 
         // --- Initialization ---
         function initialize() {
-            // Populate color pickers
             BRAND_COLORS.forEach((color, index) => {
-                createColorRadioOption(bgColorPickerContainer, 'backgroundColor', color, index === 0); // White default
-                createColorRadioOption(shapeColorPickerContainer, 'shapeColor', color, index === 1); // Black default
+                createColorRadioOption(bgColorPickerContainer, 'backgroundColor', color, index === 0, true); // isColor = true
+                createColorRadioOption(shapeColorPickerContainer, 'shapeColor', color, index === 1, true); // isColor = true
             });
-
-            // Populate download resolution picker
-            DOWNLOAD_RESOLUTIONS.forEach((res, index) => {
-                createResolutionRadioOption(downloadResolutionPickerContainer, 'downloadResolution', res, index === 0); // 500px default
+            DOWNLOAD_MAX_DIMENSIONS.forEach((res, index) => {
+                createResolutionRadioOption(downloadResolutionPickerContainer, 'downloadMaxDimension', res, index === 0, false); // isColor = false
             });
             
-            outputCanvas.width = OUTPUT_CANVAS_DISPLAY_SIZE;
-            outputCanvas.height = OUTPUT_CANVAS_DISPLAY_SIZE;
+            outputCanvasContainer.style.setProperty('--output-canvas-display-max-width', `${OUTPUT_CANVAS_DISPLAY_MAX_DIM}px`);
+            outputCanvasContainer.style.setProperty('--output-canvas-display-max-height', `${OUTPUT_CANVAS_DISPLAY_MAX_DIM}px`);
+            outputCanvas.width = OUTPUT_CANVAS_DISPLAY_MAX_DIM;
+            outputCanvas.height = OUTPUT_CANVAS_DISPLAY_MAX_DIM;
 
             addEventListeners();
-            updateSliderValueDisplays();
+            updateSliderValueDisplays(); // Initial call
+            enforceMinMaxScaleLogic(); // Initial call
             generatePatternForDisplay();
         }
 
-        function createColorRadioOption(container, name, colorData, isChecked) {
-            const radioId = `${name}_${colorData.name.toLowerCase().replace(/\s+/g, '_')}`;
+        function createRadioOptionBase(container, name, optionData, isChecked, isColorOption) {
+            const radioId = `${name}_${isColorOption ? optionData.hex : optionData.value}`;
             const radioInput = document.createElement('input');
-            radioInput.type = 'radio';
-            radioInput.id = radioId;
-            radioInput.name = name;
-            radioInput.value = colorData.hex;
+            radioInput.type = 'radio'; radioInput.id = radioId; radioInput.name = name;
+            radioInput.value = isColorOption ? optionData.hex : optionData.value;
             radioInput.className = 'radio-input';
             if (isChecked) radioInput.checked = true;
-            radioInput.addEventListener('change', generatePatternForDisplay);
+            
+            if (name === 'backgroundColor' || name === 'shapeColor') {
+                radioInput.addEventListener('change', generatePatternForDisplay);
+            } // Resolution change doesn't need to trigger redraw of preview
 
             const radioLabel = document.createElement('label');
             radioLabel.htmlFor = radioId;
             radioLabel.className = 'radio-label';
-            radioLabel.innerHTML = `<span class="color-swatch" style="background-color:${colorData.hex};"></span><span class="picker-name">${colorData.name}</span>`;
             
-            container.appendChild(radioInput);
-            container.appendChild(radioLabel);
+            let labelContent = '';
+            if (isColorOption) {
+                labelContent = `<span class="color-swatch" style="background-color:${optionData.hex};"></span>`;
+                // No text for color options
+            } else {
+                radioLabel.classList.add('has-text'); // Add class for styling text-based radio
+                labelContent = `<span class="picker-name">${optionData.name}</span>`;
+            }
+            radioLabel.innerHTML = labelContent;
+            
+            container.appendChild(radioInput); container.appendChild(radioLabel);
+        }
+
+        function createColorRadioOption(container, name, colorData, isChecked) {
+            createRadioOptionBase(container, name, colorData, isChecked, true);
         }
 
         function createResolutionRadioOption(container, name, resData, isChecked) {
-            const radioId = `${name}_${resData.value}px`;
-            const radioInput = document.createElement('input');
-            radioInput.type = 'radio';
-            radioInput.id = radioId;
-            radioInput.name = name;
-            radioInput.value = resData.value;
-            radioInput.className = 'radio-input';
-            if (isChecked) radioInput.checked = true;
-            // No event listener needed here as it's only used for download
+            createRadioOptionBase(container, name, resData, isChecked, false);
+        }
+        
+        function enforceMinMaxScaleLogic() {
+            let minVal = parseFloat(minShapeScaleSlider.value);
+            let maxVal = parseFloat(maxShapeScaleSlider.value);
 
-            const radioLabel = document.createElement('label');
-            radioLabel.htmlFor = radioId;
-            radioLabel.className = 'radio-label';
-            radioLabel.innerHTML = `<span class="picker-name">${resData.name}</span>`;
-            
-            container.appendChild(radioInput);
-            container.appendChild(radioLabel);
+            if (minVal > maxVal) {
+                if (this === minShapeScaleSlider) { // If min slider caused the overlap
+                    maxShapeScaleSlider.value = minVal;
+                } else { // If max slider caused the overlap
+                    minShapeScaleSlider.value = maxVal;
+                }
+            }
+            updateSliderValueDisplays(); // Update display after enforcing
         }
 
 
-        // --- Event Listeners ---
         function addEventListeners() {
-            patternDensitySlider.addEventListener('input', () => { updateSliderValueDisplays(); generatePatternForDisplay(); });
-            randomnessSlider.addEventListener('input', () => { updateSliderValueDisplays(); generatePatternForDisplay(); });
-            brightnessThresholdSlider.addEventListener('input', () => { updateSliderValueDisplays(); generatePatternForDisplay(); });
+            const sliders = [
+                patternDensitySlider, randomnessSlider, brightnessThresholdSlider
+            ];
+            sliders.forEach(slider => slider.addEventListener('input', () => {
+                updateSliderValueDisplays();
+                generatePatternForDisplay();
+            }));
+            
+            // Specific listeners for min/max scale sliders
+            minShapeScaleSlider.addEventListener('input', () => {
+                enforceMinMaxScaleLogic.call(minShapeScaleSlider); // Use .call to set 'this'
+                generatePatternForDisplay();
+            });
+            maxShapeScaleSlider.addEventListener('input', () => {
+                enforceMinMaxScaleLogic.call(maxShapeScaleSlider); // Use .call to set 'this'
+                generatePatternForDisplay();
+            });
+
 
             dropZone.addEventListener('click', () => imageUploadInput.click());
             imageUploadInput.addEventListener('change', handleImageUploadEvent);
-
             dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
             dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
             dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('drag-over');
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    loadImageFromFile(e.dataTransfer.files[0]);
-                }
+                e.preventDefault(); dropZone.classList.remove('drag-over');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) loadImageFromFile(e.dataTransfer.files[0]);
             });
             downloadButton.addEventListener('click', handleDownload);
         }
@@ -286,12 +339,12 @@
             patternDensityValueDisplay.textContent = patternDensitySlider.value;
             randomnessValueDisplay.textContent = parseFloat(randomnessSlider.value).toFixed(2);
             brightnessThresholdValueDisplay.textContent = brightnessThresholdSlider.value;
+            minShapeScaleValueDisplay.textContent = parseFloat(minShapeScaleSlider.value).toFixed(2);
+            maxShapeScaleValueDisplay.textContent = parseFloat(maxShapeScaleSlider.value).toFixed(2);
         }
 
         function handleImageUploadEvent(event) {
-            if (event.target.files && event.target.files[0]) {
-                loadImageFromFile(event.target.files[0]);
-            }
+            if (event.target.files && event.target.files[0]) loadImageFromFile(event.target.files[0]);
         }
 
         function loadImageFromFile(file) {
@@ -299,6 +352,7 @@
             reader.onload = (e) => {
                 originalImage = new Image();
                 originalImage.onload = () => {
+                    originalImageAspectRatio = originalImage.width / originalImage.height;
                     offscreenImageCanvas.width = originalImage.width;
                     offscreenImageCanvas.height = originalImage.height;
                     offscreenImageCtx.drawImage(originalImage, 0, 0);
@@ -309,7 +363,7 @@
                     downloadButton.disabled = false;
                     generatePatternForDisplay();
                 };
-                originalImage.onerror = () => { alert("Error loading image. Please try a different file."); resetImageState(); };
+                originalImage.onerror = () => { alert("Error loading image."); resetImageState(); };
                 originalImage.src = e.target.result;
             };
             reader.onerror = () => { alert("Error reading file."); resetImageState(); };
@@ -318,6 +372,7 @@
         
         function resetImageState() {
             originalImage = null;
+            originalImageAspectRatio = 1;
             imagePreview.classList.add('hidden');
             dropZoneContent.classList.remove('hidden');
             downloadButton.disabled = true;
@@ -329,17 +384,39 @@
             return selectedRadio ? selectedRadio.value : null;
         }
 
-        // --- Pattern Generation Core Logic ---
-        function generatePatternOnCanvas(targetCanvas, targetCtx, canvasWidth, canvasHeight) {
+        function calculateCanvasDimensions(maxDim, aspectRatio) {
+            let canvasWidth, canvasHeight;
+            if (aspectRatio >= 1) {
+                canvasWidth = maxDim;
+                canvasHeight = maxDim / aspectRatio;
+            } else {
+                canvasHeight = maxDim;
+                canvasWidth = maxDim * aspectRatio;
+            }
+            return { width: Math.round(canvasWidth), height: Math.round(canvasHeight) };
+        }
+
+        function generatePatternOnCanvas(targetCanvas, targetCtx, maxOutputDim) {
             const density = parseInt(patternDensitySlider.value);
             const randomness = parseFloat(randomnessSlider.value);
             const brightnessThreshold = parseInt(brightnessThresholdSlider.value);
+            const minScale = parseFloat(minShapeScaleSlider.value);
+            const maxScale = parseFloat(maxShapeScaleSlider.value);
             
-            const bgColor = getSelectedRadioValue('backgroundColor') || BRAND_COLORS[0].hex; // Fallback to first color
-            const shapeColor = getSelectedRadioValue('shapeColor') || BRAND_COLORS[1].hex; // Fallback to second color
+            const bgColor = getSelectedRadioValue('backgroundColor') || BRAND_COLORS[0].hex;
+            const shapeColor = getSelectedRadioValue('shapeColor') || BRAND_COLORS[1].hex;
 
+            const { width: canvasWidth, height: canvasHeight } = calculateCanvasDimensions(maxOutputDim, originalImageAspectRatio);
+            
             targetCanvas.width = canvasWidth;
             targetCanvas.height = canvasHeight;
+
+            if (targetCanvas === outputCanvas) {
+                outputCanvasContainer.style.setProperty('--output-canvas-display-max-width', `${canvasWidth}px`);
+                outputCanvasContainer.style.setProperty('--output-canvas-display-max-height', `${canvasHeight}px`);
+                outputCanvas.style.width = `${canvasWidth}px`;
+                outputCanvas.style.height = `${canvasHeight}px`;
+            }
 
             targetCtx.fillStyle = bgColor;
             targetCtx.fillRect(0, 0, canvasWidth, canvasHeight);
@@ -348,16 +425,20 @@
                 targetCtx.fillStyle = "#999";
                 targetCtx.font = `${Math.min(20, canvasWidth / 25)}px Inter`;
                 targetCtx.textAlign = "center";
-                targetCtx.fillText("Upload an image to generate pattern", canvasWidth / 2, canvasHeight / 2);
+                targetCtx.fillText("Upload an image", canvasWidth / 2, canvasHeight / 2);
                 return;
             }
             
-            const outputCellSize = canvasWidth / density;
+            const numCellsX = density;
+            const cellSize = canvasWidth / numCellsX;
+            const numCellsY = Math.round(canvasHeight / cellSize);
 
-            for (let yCell = 0; yCell < density; yCell++) {
-                for (let xCell = 0; xCell < density; xCell++) {
-                    const sourceX = Math.floor((xCell + 0.5) * (originalImage.width / density));
-                    const sourceY = Math.floor((yCell + 0.5) * (originalImage.height / density));
+            for (let yCell = 0; yCell < numCellsY; yCell++) {
+                for (let xCell = 0; xCell < numCellsX; xCell++) {
+                    const sourceNormX = (xCell + 0.5) / numCellsX;
+                    const sourceNormY = (yCell + 0.5) / numCellsY;
+                    const sourceX = Math.floor(sourceNormX * originalImage.width);
+                    const sourceY = Math.floor(sourceNormY * originalImage.height);
                     const clampedSourceX = Math.min(Math.max(0, sourceX), originalImage.width - 1);
                     const clampedSourceY = Math.min(Math.max(0, sourceY), originalImage.height - 1);
                     
@@ -371,12 +452,15 @@
                         if (randomness <= 0.01) drawCircle = false;
                         else if (randomness >= 0.99) drawCircle = true;
 
-                        const shapeSizeBaseRatio = 0.85;
                         const brightnessFactor = Math.max(0, (brightnessThreshold - brightness)) / brightnessThreshold;
-                        const dynamicSizeFactor = 0.7 + brightnessFactor * 0.3; 
-                        const actualShapeSize = outputCellSize * shapeSizeBaseRatio * dynamicSizeFactor;
-                        const drawX = xCell * outputCellSize + (outputCellSize - actualShapeSize) / 2;
-                        const drawY = yCell * outputCellSize + (outputCellSize - actualShapeSize) / 2;
+                        // Ensure minScale is not greater than maxScale before interpolation
+                        const actualMinScale = Math.min(minScale, maxScale);
+                        const actualMaxScale = Math.max(minScale, maxScale);
+                        const currentShapeScaleRatio = actualMinScale + brightnessFactor * (actualMaxScale - actualMinScale);
+                        
+                        const actualShapeSize = cellSize * currentShapeScaleRatio;
+                        const drawX = xCell * cellSize + (cellSize - actualShapeSize) / 2;
+                        const drawY = yCell * cellSize + (cellSize - actualShapeSize) / 2;
 
                         if (drawCircle) {
                             targetCtx.beginPath();
@@ -391,28 +475,25 @@
         }
         
         function generatePatternForDisplay() {
-            generatePatternOnCanvas(outputCanvas, outputCtx, OUTPUT_CANVAS_DISPLAY_SIZE, OUTPUT_CANVAS_DISPLAY_SIZE);
+            generatePatternOnCanvas(outputCanvas, outputCtx, OUTPUT_CANVAS_DISPLAY_MAX_DIM);
         }
 
         function handleDownload() {
             if (!originalImage) {
-                alert("Please upload an image first.");
-                return;
+                alert("Please upload an image first."); return;
             }
-            const selectedResolution = parseInt(getSelectedRadioValue('downloadResolution')) || DOWNLOAD_RESOLUTIONS[0].value; // Fallback
+            const selectedMaxDim = parseInt(getSelectedRadioValue('downloadMaxDimension')) || DOWNLOAD_MAX_DIMENSIONS[0].value;
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
             
-            console.log(`Generating download at ${selectedResolution}x${selectedResolution}`);
-            generatePatternOnCanvas(tempCanvas, tempCtx, selectedResolution, selectedResolution);
+            generatePatternOnCanvas(tempCanvas, tempCtx, selectedMaxDim);
             
             const dataURL = tempCanvas.toDataURL('image/png');
             const link = document.createElement('a');
-            link.download = `brand-pattern-${selectedResolution}px.png`;
+            const { width: dlWidth, height: dlHeight } = calculateCanvasDimensions(selectedMaxDim, originalImageAspectRatio);
+            link.download = `brand-pattern-${dlWidth}x${dlHeight}.png`;
             link.href = dataURL;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
         initialize();
