@@ -156,6 +156,10 @@
                 <label class="control-label">Download Resolution</label>
                 <div id="downloadResolutionPickerContainer" class="picker-group"></div>
             </div>
+            <div>
+                <label for="invertImageToggle" class="control-label">Invert Image</label>
+                <input type="checkbox" id="invertImageToggle" style="width: 1.5em; height: 1.5em; accent-color: #0C76FE; vertical-align: middle;" />
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -212,6 +216,8 @@
         const minShapeScaleValueDisplay = document.getElementById('minShapeScaleValue');
         const maxShapeScaleSlider = document.getElementById('maxShapeScaleSlider');
         const maxShapeScaleValueDisplay = document.getElementById('maxShapeScaleValue');
+        const invertImageToggle = document.getElementById('invertImageToggle');
+        invertImageToggle.addEventListener('change', generatePatternForDisplay);
         
         const bgColorPickerContainer = document.getElementById('bgColorPickerContainer');
         const shapeColorPickerContainer = document.getElementById('shapeColorPickerContainer');
@@ -441,9 +447,13 @@
                     const clampedSourceX = Math.min(Math.max(0, sourceX), originalImage.width - 1);
                     const clampedSourceY = Math.min(Math.max(0, sourceY), originalImage.height - 1);
                     
-                    const pixelData = offscreenImageCtx.getImageData(clampedSourceX, clampedSourceY, 1, 1).data;
-                    const r = pixelData[0]; const g = pixelData[1]; const b = pixelData[2];
-                    const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b; 
+                    let r = pixelData[0], g = pixelData[1], b = pixelData[2];
+                    if (invertImageToggle.checked) {
+                        r = 255 - r;
+                        g = 255 - g;
+                        b = 255 - b;
+                    }
+                    const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
                     if (brightness < brightnessThreshold) {
                         targetCtx.fillStyle = shapeColor;
