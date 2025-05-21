@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image to Brand Pattern Generator V10</title>
+    <title>Image to Brand Pattern Generator V10.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -216,7 +216,7 @@
         const minShapeScaleValueDisplay = document.getElementById('minShapeScaleValue');
         const maxShapeScaleSlider = document.getElementById('maxShapeScaleSlider');
         const maxShapeScaleValueDisplay = document.getElementById('maxShapeScaleValue');
-        const invertImageToggle = document.getElementById('invertImageToggle'); // Correctly referenced
+        const invertImageToggle = document.getElementById('invertImageToggle');
         
         const bgColorPickerContainer = document.getElementById('bgColorPickerContainer');
         const shapeColorPickerContainer = document.getElementById('shapeColorPickerContainer');
@@ -253,7 +253,7 @@
 
             addEventListeners();
             updateSliderValueDisplays(); 
-            enforceMinMaxScaleLogic(); 
+            // *** REMOVED enforceMinMaxScaleLogic() call from here to prevent error ***
             generatePatternForDisplay();
         }
 
@@ -262,3 +262,251 @@
             const radioInput = document.createElement('input');
             radioInput.type = 'radio'; radioInput.id = radioId; radioInput.name = name;
             radioInput.value = isColorOption ? optionData.hex : optionData.value;
+            radioInput.className = 'radio-input';
+            if (isChecked) radioInput.checked = true;
+            
+            if (name === 'backgroundColor' || name === 'shapeColor') {
+                radioInput.addEventListener('change', generatePatternForDisplay);
+            }
+
+            const radioLabel = document.createElement('label');
+            radioLabel.htmlFor = radioId;
+            radioLabel.className = 'radio-label';
+            
+            let labelContent = '';
+            if (isColorOption) {
+                labelContent = `<span class="color-swatch" style="background-color:${optionData.hex};" title="${optionData.name}"></span>`;
+            } else {
+                radioLabel.classList.add('has-text'); 
+                labelContent = `<span class="picker-name">${optionData.name}</span>`;
+            }
+            radioLabel.innerHTML = labelContent;
+            
+            container.appendChild(radioInput); container.appendChild(radioLabel);
+        }
+
+        function createColorRadioOption(container, name, colorData, isChecked) {
+            createRadioOptionBase(container, name, colorData, isChecked, true);
+        }
+
+        function createResolutionRadioOption(container, name, resData, isChecked) {
+            createRadioOptionBase(container, name, resData, isChecked, false);
+        }
+        
+        function enforceMinMaxScaleLogic() {
+            let minVal = parseFloat(minShapeScaleSlider.value);
+            let maxVal = parseFloat(maxShapeScaleSlider.value);
+
+            // 'this' refers to the slider that triggered the event, thanks to .call()
+            if (minVal > maxVal) {
+                if (this === minShapeScaleSlider) { 
+                    maxShapeScaleSlider.value = minVal;
+                } else { // This means maxShapeScaleSlider must have been 'this'
+                    minShapeScaleSlider.value = maxVal;
+                }
+            }
+            updateSliderValueDisplays(); 
+        }
+
+
+        function addEventListeners() {
+            const sliders = [
+                patternDensitySlider, randomnessSlider, brightnessThresholdSlider
+            ];
+            sliders.forEach(slider => slider.addEventListener('input', () => {
+                updateSliderValueDisplays();
+                generatePatternForDisplay();
+            }));
+            
+            minShapeScaleSlider.addEventListener('input', function() { 
+                enforceMinMaxScaleLogic.call(this); 
+                generatePatternForDisplay();
+            });
+            maxShapeScaleSlider.addEventListener('input', function() { 
+                enforceMinMaxScaleLogic.call(this); 
+                generatePatternForDisplay();
+            });
+            
+            invertImageToggle.addEventListener('change', generatePatternForDisplay);
+
+            dropZone.addEventListener('click', () => imageUploadInput.click());
+            imageUploadInput.addEventListener('change', handleImageUploadEvent);
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault(); dropZone.classList.remove('drag-over');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) loadImageFromFile(e.dataTransfer.files[0]);
+            });
+            downloadButton.addEventListener('click', handleDownload);
+        }
+        
+        function updateSliderValueDisplays() {
+            patternDensityValueDisplay.textContent = patternDensitySlider.value;
+            randomnessValueDisplay.textContent = parseFloat(randomnessSlider.value).toFixed(2);
+            brightnessThresholdValueDisplay.textContent = brightnessThresholdSlider.value;
+            minShapeScaleValueDisplay.textContent = parseFloat(minShapeScaleSlider.value).toFixed(2);
+            maxShapeScaleValueDisplay.textContent = parseFloat(maxShapeScaleSlider.value).toFixed(2);
+        }
+
+        function handleImageUploadEvent(event) {
+            if (event.target.files && event.target.files[0]) loadImageFromFile(event.target.files[0]);
+        }
+
+        function loadImageFromFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImage = new Image();
+                originalImage.onload = () => {
+                    originalImageAspectRatio = originalImage.width / originalImage.height;
+                    offscreenImageCanvas.width = originalImage.width;
+                    offscreenImageCanvas.height = originalImage.height;
+                    offscreenImageCtx.drawImage(originalImage, 0, 0);
+                    
+                    imagePreview.src = e.target.result;
+                    imagePreview.classList.remove('hidden');
+                    dropZoneContent.classList.add('hidden');
+                    downloadButton.disabled = false;
+                    generatePatternForDisplay();
+                };
+                originalImage.onerror = () => { alert("Error loading image."); resetImageState(); };
+                originalImage.src = e.target.result;
+            };
+            reader.onerror = () => { alert("Error reading file."); resetImageState(); };
+            reader.readAsDataURL(file);
+        }
+        
+        function resetImageState() {
+            originalImage = null;
+            originalImageAspectRatio = 1;
+            imagePreview.classList.add('hidden');
+            dropZoneContent.classList.remove('hidden');
+            downloadButton.disabled = true;
+            generatePatternForDisplay();
+        }
+        
+        function getSelectedRadioValue(radioGroupName) {
+            const selectedRadio = document.querySelector(`input[name="${radioGroupName}"]:checked`);
+            return selectedRadio ? selectedRadio.value : null;
+        }
+
+        function calculateCanvasDimensions(maxDim, aspectRatio) {
+            let canvasWidth, canvasHeight;
+            if (aspectRatio >= 1) {
+                canvasWidth = maxDim;
+                canvasHeight = maxDim / aspectRatio;
+            } else {
+                canvasHeight = maxDim;
+                canvasWidth = maxDim * aspectRatio;
+            }
+            return { width: Math.round(canvasWidth), height: Math.round(canvasHeight) };
+        }
+
+        function generatePatternOnCanvas(targetCanvas, targetCtx, maxOutputDim) {
+            const density = parseInt(patternDensitySlider.value);
+            const randomness = parseFloat(randomnessSlider.value);
+            const brightnessThreshold = parseInt(brightnessThresholdSlider.value);
+            const minScale = parseFloat(minShapeScaleSlider.value);
+            const maxScale = parseFloat(maxShapeScaleSlider.value);
+            
+            const bgColor = getSelectedRadioValue('backgroundColor') || BRAND_COLORS[0].hex;
+            const shapeColor = getSelectedRadioValue('shapeColor') || BRAND_COLORS[1].hex;
+
+            const { width: canvasWidth, height: canvasHeight } = calculateCanvasDimensions(maxOutputDim, originalImageAspectRatio);
+            
+            targetCanvas.width = canvasWidth;
+            targetCanvas.height = canvasHeight;
+
+            if (targetCanvas === outputCanvas) {
+                outputCanvasContainer.style.setProperty('--output-canvas-display-max-width', `${canvasWidth}px`);
+                outputCanvasContainer.style.setProperty('--output-canvas-display-max-height', `${canvasHeight}px`);
+                outputCanvas.style.width = `${canvasWidth}px`;
+                outputCanvas.style.height = `${canvasHeight}px`;
+            }
+
+            targetCtx.fillStyle = bgColor;
+            targetCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            if (!originalImage) {
+                targetCtx.fillStyle = "#999";
+                targetCtx.font = `${Math.min(20, canvasWidth / 25)}px Inter`;
+                targetCtx.textAlign = "center";
+                targetCtx.fillText("Pattern will appear here", canvasWidth / 2, canvasHeight / 2);
+                return;
+            }
+            
+            const numCellsX = density;
+            const cellSize = canvasWidth / numCellsX;
+            const numCellsY = Math.round(canvasHeight / cellSize);
+
+            for (let yCell = 0; yCell < numCellsY; yCell++) {
+                for (let xCell = 0; xCell < numCellsX; xCell++) {
+                    const sourceNormX = (xCell + 0.5) / numCellsX;
+                    const sourceNormY = (yCell + 0.5) / numCellsY;
+                    const sourceX = Math.floor(sourceNormX * originalImage.width);
+                    const sourceY = Math.floor(sourceNormY * originalImage.height);
+                    const clampedSourceX = Math.min(Math.max(0, sourceX), originalImage.width - 1);
+                    const clampedSourceY = Math.min(Math.max(0, sourceY), originalImage.height - 1);
+                    
+                    const pixelData = offscreenImageCtx.getImageData(clampedSourceX, clampedSourceY, 1, 1).data;
+                    let r = pixelData[0], g = pixelData[1], b = pixelData[2];
+                    
+                    if (invertImageToggle.checked) {
+                        r = 255 - r;
+                        g = 255 - g;
+                        b = 255 - b;
+                    }
+                    const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b; 
+
+                    if (brightness < brightnessThreshold) {
+                        targetCtx.fillStyle = shapeColor;
+                        let drawCircle = Math.random() < randomness;
+                        if (randomness <= 0.01) drawCircle = false;
+                        else if (randomness >= 0.99) drawCircle = true;
+
+                        const brightnessFactor = Math.max(0, (brightnessThreshold - brightness)) / brightnessThreshold;
+                        const actualMinScale = Math.min(minScale, maxScale);
+                        const actualMaxScale = Math.max(minScale, maxScale);
+                        const currentShapeScaleRatio = actualMinScale + brightnessFactor * (actualMaxScale - actualMinScale);
+                        
+                        const actualShapeSize = cellSize * currentShapeScaleRatio;
+                        const drawX = xCell * cellSize + (cellSize - actualShapeSize) / 2;
+                        const drawY = yCell * cellSize + (cellSize - actualShapeSize) / 2;
+
+                        if (drawCircle) {
+                            targetCtx.beginPath();
+                            targetCtx.arc(drawX + actualShapeSize / 2, drawY + actualShapeSize / 2, actualShapeSize / 2, 0, 2 * Math.PI);
+                            targetCtx.fill();
+                        } else {
+                            targetCtx.fillRect(drawX, drawY, actualShapeSize, actualShapeSize);
+                        }
+                    }
+                }
+            }
+        }
+        
+        function generatePatternForDisplay() {
+            generatePatternOnCanvas(outputCanvas, outputCtx, OUTPUT_CANVAS_DISPLAY_MAX_DIM);
+        }
+
+        function handleDownload() {
+            if (!originalImage) {
+                alert("Please upload an image first."); return;
+            }
+            const selectedMaxDim = parseInt(getSelectedRadioValue('downloadMaxDimension')) || DOWNLOAD_MAX_DIMENSIONS[0].value;
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            generatePatternOnCanvas(tempCanvas, tempCtx, selectedMaxDim);
+            
+            const dataURL = tempCanvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            const { width: dlWidth, height: dlHeight } = calculateCanvasDimensions(selectedMaxDim, originalImageAspectRatio);
+            link.download = `brand-pattern-${dlWidth}x${dlHeight}.png`;
+            link.href = dataURL;
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        initialize();
+    </script>
+</body>
+</html>
