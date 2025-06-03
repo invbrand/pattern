@@ -11,8 +11,15 @@
             overscroll-behavior: none;
         }
         .drag-over {
+            border-style: solid; /* Added for active feel */
             border-color: #0C76FE; /* Optimist Blue */
             background-color: #e7f1ff;
+        }
+        #dropZone:hover {
+            border-style: solid; /* Added for active feel */
+        }
+        #dropZone:hover svg, #dropZone.drag-over svg {
+            color: #0C76FE; /* Optimist Blue 600 */
         }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 10px; }
@@ -48,12 +55,12 @@
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none; appearance: none;
             width: 18px; height: 18px; border-radius: 50%;
-            background: #0C76FE;
+            background: #DCF56B; /* Tech Yellow */
             cursor: pointer;
         }
         .slider::-moz-range-thumb {
             width: 18px; height: 18px; border-radius: 50%;
-            background: #0C76FE;
+            background: #DCF56B; /* Tech Yellow */
             cursor: pointer; border: none;
         }
         
@@ -97,6 +104,14 @@
             background-color: #e7f1ff;
             box-shadow: 0 0 0 2px #0C76FE; /* 2px outline */
         }
+        .radio-input:focus + .radio-label {
+            box-shadow: 0 0 0 2px #0C76FE, 0 0 0 4px #BFDBFE; /* Optimist Blue shadow, lighter blue outer ring */
+        }
+        .radio-input:checked:focus + .radio-label { /* Ensure focused checked state is also clear */
+            border-color: #0C76FE;
+            background-color: #e7f1ff;
+            box-shadow: 0 0 0 2px #0C76FE, 0 0 0 4px #BFDBFE; /* Keep shadow consistent */
+        }
         .color-swatch {
             width: 20px; 
             height: 20px;
@@ -109,12 +124,31 @@
             line-height: 1rem; 
             margin-left: 0.25rem; 
         }
+
+        /* Adjustments for small screens */
+        @media (max-width: 400px) { /* Target screens narrower than 400px */
+            .picker-group {
+                flex-wrap: wrap; /* Allow wrapping */
+                gap: 0.25rem;    /* Reduce gap slightly (Tailwind's gap-1) */
+                /* Keep overflow-x: auto; as it might still be useful if a single item is too wide, though less likely with wrapping */
+            }
+            .radio-label.has-text { /* For text labels like resolution picker */
+                padding: 0.125rem 0.375rem; /* Slightly reduce padding */
+                font-size: 0.6875rem; /* Slightly smaller font for text in pickers */
+            }
+            .picker-name {
+                 font-size: 0.6875rem; /* Ensure picker name font size also adjusts */
+            }
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-sky-300 selection:text-sky-900">
+<body class="bg-slate-200 text-slate-800 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-sky-300 selection:text-sky-900">
+    <div id="pageLoader" class="fixed top-0 left-0 w-full h-full bg-slate-200 bg-opacity-80 flex items-center justify-center z-50">
+        <div class="w-16 h-16 border-4 border-t-4 border-t-[#0C76FE] border-slate-300 rounded-full animate-spin"></div>
+    </div>
 
     <div class="w-full max-w-7xl bg-white shadow-2xl rounded-xl p-6 md:p-8">
         <header class="mb-6 md:mb-8 text-center">
@@ -122,26 +156,26 @@
             <p class="text-slate-500 mt-1">Upload an image and customize your pattern.</p>
         </header>
 
-        <div class="controls-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4 mb-6 md:mb-8 p-4 bg-slate-50 rounded-lg shadow">
+        <div class="controls-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4 mb-6 md:mb-8 p-4 bg-slate-100 rounded-lg shadow">
             <div>
                 <label for="patternDensitySlider" class="control-label">Pattern Density (<span id="patternDensityValue">50</span> cells/width)</label>
-                <input type="range" id="patternDensitySlider" min="1" max="200" value="50" class="slider w-full">
+                <input type="range" id="patternDensitySlider" min="1" max="200" value="50" class="slider w-full focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0C76FE]">
             </div>
             <div>
                 <label for="randomnessSlider" class="control-label">Circle/Square Mix (<span id="randomnessValue">0.50</span>)</label>
-                <input type="range" id="randomnessSlider" min="0" max="1" value="0.5" step="0.01" class="slider w-full">
+                <input type="range" id="randomnessSlider" min="0" max="1" value="0.5" step="0.01" class="slider w-full focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0C76FE]">
             </div>
              <div>
                 <label for="brightnessThresholdSlider" class="control-label">Shape Sensitivity (<span id="brightnessThresholdValue">180</span>)</label>
-                <input type="range" id="brightnessThresholdSlider" min="0" max="255" value="180" class="slider w-full">
+                <input type="range" id="brightnessThresholdSlider" min="0" max="255" value="180" class="slider w-full focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0C76FE]">
             </div>
             <div>
                 <label for="minShapeScaleSlider" class="control-label">Shape Scale (Min: <span id="minShapeScaleValue">0.10</span>)</label>
-                <input type="range" id="minShapeScaleSlider" min="0.01" max="1.0" value="0.1" step="0.01" class="slider w-full">
+                <input type="range" id="minShapeScaleSlider" min="0.01" max="1.0" value="0.1" step="0.01" class="slider w-full focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0C76FE]">
             </div>
             <div>
                 <label for="maxShapeScaleSlider" class="control-label">Shape Scale (Max: <span id="maxShapeScaleValue">0.90</span>)</label>
-                <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.9" step="0.01" class="slider w-full">
+                <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.9" step="0.01" class="slider w-full focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0C76FE]">
             </div>
             
             <div class="sm:col-span-1">
@@ -158,15 +192,23 @@
             </div>
             <div>
                 <label for="invertImageToggle" class="control-label">Invert Image Colors</label>
-                <input type="checkbox" id="invertImageToggle" class="mt-1 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" style="accent-color: #0C76FE; vertical-align: middle;" />
+                <input type="checkbox" id="invertImageToggle" class="mt-1 h-5 w-5 text-[#0C76FE] border-gray-300 rounded focus:ring-blue-500" style="accent-color: #0C76FE; vertical-align: middle;" />
             </div>
         </div>
 
+        <div id="errorNotification" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4 shadow" role="alert">
+            <strong class="font-bold">Oops!</strong>
+            <span class="block sm:inline" id="errorMessageText">Something went wrong.</span>
+            <span class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="document.getElementById('errorNotification').classList.add('hidden')">
+                <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+            </span>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            <div class="h-72 md:h-auto md:aspect-[4/3] flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-sky-500 transition-colors bg-slate-50" id="dropZone">
+            <div class="h-72 md:h-auto md:aspect-[4/3] flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-[#0C76FE] transition-colors bg-slate-50" id="dropZone">
                 <input type="file" id="imageUploadInput" class="hidden" accept="image/*">
                 <div id="dropZoneContent">
-                    <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                    <svg class="mx-auto h-16 w-16 text-slate-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                     <p class="mt-2 text-sm text-slate-600"><span class="font-semibold text-sky-600">Click to upload</span> or drag and drop</p>
@@ -181,7 +223,7 @@
         </div>
         
         <div class="mt-6 md:mt-8 text-center">
-            <button id="downloadButton" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            <button id="downloadButton" class="bg-[#0C76FE] hover:bg-[#005cbf] text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0C76FE]" disabled>
                 Download Pattern
             </button>
         </div>
@@ -255,6 +297,7 @@
             updateSliderValueDisplays(); 
             // *** REMOVED enforceMinMaxScaleLogic() call from here to prevent error ***
             generatePatternForDisplay();
+            document.getElementById('pageLoader').style.display = 'none';
         }
 
         function createRadioOptionBase(container, name, optionData, isChecked, isColorOption) {
@@ -352,11 +395,31 @@
             if (event.target.files && event.target.files[0]) loadImageFromFile(event.target.files[0]);
         }
 
+        function showErrorNotification(message) {
+            const errorNotificationDiv = document.getElementById('errorNotification');
+            const errorMessageTextSpan = document.getElementById('errorMessageText');
+
+            errorMessageTextSpan.textContent = message;
+            errorNotificationDiv.classList.remove('hidden');
+
+            // Optional: Auto-hide after some time (e.g., 7 seconds)
+            // setTimeout(() => {
+            //     errorNotificationDiv.classList.add('hidden');
+            // }, 7000);
+            // For now, let user close it manually.
+        }
+
+        function clearErrorNotification() {
+            const errorNotificationDiv = document.getElementById('errorNotification');
+            errorNotificationDiv.classList.add('hidden');
+        }
+
         function loadImageFromFile(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 originalImage = new Image();
                 originalImage.onload = () => {
+                    clearErrorNotification();
                     originalImageAspectRatio = originalImage.width / originalImage.height;
                     offscreenImageCanvas.width = originalImage.width;
                     offscreenImageCanvas.height = originalImage.height;
@@ -368,14 +431,21 @@
                     downloadButton.disabled = false;
                     generatePatternForDisplay();
                 };
-                originalImage.onerror = () => { alert("Error loading image."); resetImageState(); };
+                originalImage.onerror = () => {
+                    showErrorNotification("Error processing image. It might be an unsupported format or corrupted. Please try a different image.");
+                    resetImageState();
+                };
                 originalImage.src = e.target.result;
             };
-            reader.onerror = () => { alert("Error reading file."); resetImageState(); };
+            reader.onerror = () => {
+                showErrorNotification("Could not read the selected file. Please ensure it's not corrupted and try again.");
+                resetImageState();
+            };
             reader.readAsDataURL(file);
         }
         
         function resetImageState() {
+            clearErrorNotification();
             originalImage = null;
             originalImageAspectRatio = 1;
             imagePreview.classList.add('hidden');
@@ -427,10 +497,31 @@
             targetCtx.fillRect(0, 0, canvasWidth, canvasHeight);
 
             if (!originalImage) {
-                targetCtx.fillStyle = "#999";
-                targetCtx.font = `${Math.min(20, canvasWidth / 25)}px Inter`;
+                // Draw a simple placeholder pattern
+                targetCtx.fillStyle = "#E0E0E0"; // A light gray for the placeholder shapes
+                const placeholderCellSize = Math.min(canvasWidth, canvasHeight) / 5; // Adjust size as needed
+                const shapeSize = placeholderCellSize * 0.3; // Size of individual shapes
+
+                for (let i = 0; i < 5; i++) {
+                    for (let j = 0; j < 5; j++) {
+                        const x = (i + 0.5) * placeholderCellSize - shapeSize / 2;
+                        const y = (j + 0.5) * placeholderCellSize - shapeSize / 2;
+
+                        // Alternate between circles and squares for variety
+                        if ((i + j) % 2 === 0) {
+                            targetCtx.beginPath();
+                            targetCtx.arc(x + shapeSize / 2, y + shapeSize / 2, shapeSize / 2, 0, 2 * Math.PI);
+                            targetCtx.fill();
+                        } else {
+                            targetCtx.fillRect(x, y, shapeSize, shapeSize);
+                        }
+                    }
+                }
+
+                targetCtx.fillStyle = "#BBBBBB"; // Slightly darker gray for the text
+                targetCtx.font = `${Math.min(16, canvasWidth / 30)}px Inter`; // Adjusted font size
                 targetCtx.textAlign = "center";
-                targetCtx.fillText("Pattern will appear here", canvasWidth / 2, canvasHeight / 2);
+                targetCtx.fillText("Upload an image to generate a pattern", canvasWidth / 2, canvasHeight / 2);
                 return;
             }
             
@@ -492,6 +583,15 @@
             if (!originalImage) {
                 alert("Please upload an image first."); return;
             }
+
+            downloadButton.disabled = true;
+            downloadButton.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Downloading...`;
+
             const selectedMaxDim = parseInt(getSelectedRadioValue('downloadMaxDimension')) || DOWNLOAD_MAX_DIMENSIONS[0].value;
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
@@ -504,6 +604,17 @@
             link.download = `brand-pattern-${dlWidth}x${dlHeight}.png`;
             link.href = dataURL;
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
+
+            downloadButton.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white inline -ml-1 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Downloaded!`;
+
+            setTimeout(() => {
+                downloadButton.innerHTML = 'Download Pattern';
+                downloadButton.disabled = false;
+            }, 3000); // Revert after 3 seconds
         }
 
         initialize();
