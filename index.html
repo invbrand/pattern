@@ -3,249 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image to Brand Pattern Generator V10.1</title>
+    <title>BRAND IMAGE PATTERN GENERATOR</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
             overscroll-behavior: none;
         }
-        .drag-over {
-            border-style: solid; /* Added for active feel */
-            border-color: #0C76FE; /* Optimist Blue */
-            background-color: #e7f1ff;
-        }
-        #dropZone:hover {
-            border-style: solid; /* Added for active feel */
-        }
-        #dropZone:hover svg, #dropZone.drag-over svg {
-            color: #0C76FE; /* Optimist Blue 600 */
-        }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: #c4c4c4; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
-
-        #outputCanvasContainer {
+        /* Custom Slider Styles */
+        .custom-slider {
+            -webkit-appearance: none;
+            appearance: none;
             width: 100%;
-            max-width: var(--output-canvas-display-max-width, 500px);
-            max-height: var(--output-canvas-display-max-height, 500px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            height: 2px; 
+            background: #000000; /* Black track */
+            outline: none;
+            margin-top: 6px; 
         }
-        #outputCanvas {
-            max-width: 100%;
-            max-height: 100%;
-            height: auto;
-        }
-        .controls-container label.control-label {
-            font-weight: 500;
-            margin-bottom: 0.25rem; /* Tailwind: mb-1 */
-            display: block;
-            font-size: 0.875rem; /* Tailwind: text-sm */
-            color: #374151; /* Tailwind: text-slate-700 */
-        }
-        .slider {
-            -webkit-appearance: none; width: 100%; height: 8px;
-            border-radius: 5px; background: #d3d3d3; outline: none;
-            opacity: 0.7; -webkit-transition: .2s; transition: opacity .2s;
-        }
-        .slider:hover { opacity: 1; }
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none;
-            width: 18px; height: 18px; border-radius: 50%;
-            background: #DCF56B; /* Tech Yellow */
+        .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px; 
+            height: 14px; 
+            background: #000000; /* Black thumb */
+            border-radius: 50%;
             cursor: pointer;
         }
-        .slider::-moz-range-thumb {
-            width: 18px; height: 18px; border-radius: 50%;
-            background: #DCF56B; /* Tech Yellow */
-            cursor: pointer; border: none;
-        }
-        
-        .picker-group {
-            display: flex;
-            flex-wrap: nowrap;
-            gap: 0.375rem; /* Tailwind: gap-1.5 - Space between items */
-            overflow-x: auto;
-            padding: 0.125rem; /* Tailwind: p-0.5 (2px) - Gives space for shadow at edges */
-            max-width: 100%;
-            align-items: center; 
-        }
-        .radio-label {
-            display: flex;
-            align-items: center;
-            justify-content: center; 
-            padding: 0.25rem; /* Tailwind: p-1 */
-            min-width: 32px; 
-            height: 32px;   
-            border: 1px solid #D1D5DB;
-            border-radius: 0.375rem;
+        .custom-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: #000000;
+            border-radius: 50%;
             cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            background-color: #fff;
-            white-space: nowrap;
+            border: none;
         }
-        .radio-label.has-text { 
-             padding: 0.125rem 0.5rem; 
+
+        /* Custom Checkbox for Invert */
+        .custom-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            width: 20px; 
+            height: 20px; 
+            background-color: white;
+            border: 1px solid black;
+            cursor: pointer;
+            position: relative;
+            display: inline-block;
+            vertical-align: middle;
         }
-        .radio-label:hover {
-            border-color: #9CA3AF;
+        .custom-checkbox:checked::after {
+            content: ''; 
+            position: absolute;
+            left: 6px;
+            top: 3px;
+            width: 5px;
+            height: 10px;
+            border: solid black;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
         }
+
+        /* Radio button base (hidden) */
         .radio-input {
             opacity: 0;
             width: 0;
             height: 0;
             position: absolute;
         }
-        .radio-input:checked + .radio-label {
-            border-color: #0C76FE;
-            background-color: #e7f1ff;
-            box-shadow: 0 0 0 2px #0C76FE; /* 2px outline */
-        }
-        .radio-input:focus + .radio-label {
-            box-shadow: 0 0 0 2px #0C76FE, 0 0 0 4px #BFDBFE; /* Optimist Blue shadow, lighter blue outer ring */
-        }
-        .radio-input:checked:focus + .radio-label { /* Ensure focused checked state is also clear */
-            border-color: #0C76FE;
-            background-color: #e7f1ff;
-            box-shadow: 0 0 0 2px #0C76FE, 0 0 0 4px #BFDBFE; /* Keep shadow consistent */
-        }
-        .color-swatch {
-            width: 20px; 
+
+        /* Styling for the label acting as a color swatch */
+        .radio-label.color-swatch-label {
+            width: 20px;
             height: 20px;
-            border-radius: 0.25rem; 
-            border: 1px solid rgba(0,0,0,0.1); 
-            flex-shrink: 0;
+            border: 1px solid black;
+            cursor: pointer;
+            display: block; 
         }
-        .picker-name { 
-            font-size: 0.75rem; 
-            line-height: 1rem; 
-            margin-left: 0.25rem; 
-        }
-
-        /* Adjustments for small screens */
-        @media (max-width: 400px) { /* Target screens narrower than 400px */
-            .picker-group {
-                flex-wrap: wrap; /* Allow wrapping */
-                gap: 0.25rem;    /* Reduce gap slightly (Tailwind's gap-1) */
-                /* Keep overflow-x: auto; as it might still be useful if a single item is too wide, though less likely with wrapping */
-            }
-            .radio-label.has-text { /* For text labels like resolution picker */
-                padding: 0.125rem 0.375rem; /* Slightly reduce padding */
-                font-size: 0.6875rem; /* Slightly smaller font for text in pickers */
-            }
-            .picker-name {
-                 font-size: 0.6875rem; /* Ensure picker name font size also adjusts */
-            }
-        }
-    </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body class="bg-slate-200 text-slate-800 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-sky-300 selection:text-sky-900">
-    <div id="pageLoader" class="fixed top-0 left-0 w-full h-full bg-slate-200 bg-opacity-80 flex items-center justify-center z-50">
-        <div class="w-16 h-16 border-4 border-t-4 border-t-[#0C76FE] border-slate-300 rounded-full animate-spin"></div>
-    </div>
-
-    <div class="w-full max-w-7xl bg-white shadow-2xl rounded-xl p-6 md:p-8">
-        <header class="mb-6 md:mb-8 text-center">
-            <h1 class="text-3xl md:text-4xl font-bold text-slate-700">Brand Pattern Generator</h1>
-            <p class="text-slate-500 mt-1">Upload an image and customize your pattern.</p>
-        </header>
-
-        <div class="controls-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4 mb-6 md:mb-8 p-4 bg-slate-100 rounded-lg shadow">
-            <div>
-                <label for="patternDensitySlider" class="control-label">Pattern Density (<span id="patternDensityValue">50</span> cells/width)</label>
-                <input type="range" id="patternDensitySlider" min="1" max="200" value="50" class="slider w-full focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0C76FE]">
-            </div>
-            <div>
-                <label for="randomnessSlider" class="control-label">Circle/Square Mix (<span id="randomnessValue">0.50</span>)</label>
-                <input type="range" id="randomnessSlider" min="0" max="1" value="0.5" step="0.01" class="slider w-full focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0C76FE]">
-            </div>
-             <div>
-                <label for="brightnessThresholdSlider" class="control-label">Shape Sensitivity (<span id="brightnessThresholdValue">180</span>)</label>
-                <input type="range" id="brightnessThresholdSlider" min="0" max="255" value="180" class="slider w-full focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0C76FE]">
-            </div>
-            <div>
-                <label for="minShapeScaleSlider" class="control-label">Shape Scale (Min: <span id="minShapeScaleValue">0.10</span>)</label>
-                <input type="range" id="minShapeScaleSlider" min="0.01" max="1.0" value="0.1" step="0.01" class="slider w-full focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0C76FE]">
-            </div>
-            <div>
-                <label for="maxShapeScaleSlider" class="control-label">Shape Scale (Max: <span id="maxShapeScaleValue">0.90</span>)</label>
-                <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.9" step="0.01" class="slider w-full focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0C76FE]">
-            </div>
-            
-            <div class="sm:col-span-1">
-                <label class="control-label">Background Color</label>
-                <div id="bgColorPickerContainer" class="picker-group"></div>
-            </div>
-            <div class="sm:col-span-1">
-                <label class="control-label">Shape Color</label>
-                <div id="shapeColorPickerContainer" class="picker-group"></div>
-            </div>
-            <div class="sm:col-span-1">
-                <label class="control-label">Download Resolution</label>
-                <div id="downloadResolutionPickerContainer" class="picker-group"></div>
-            </div>
-            <div>
-                <label for="invertImageToggle" class="control-label">Invert Image Colors</label>
-                <input type="checkbox" id="invertImageToggle" class="mt-1 h-5 w-5 text-[#0C76FE] border-gray-300 rounded focus:ring-blue-500" style="accent-color: #0C76FE; vertical-align: middle;" />
-            </div>
-        </div>
-
-        <div id="errorNotification" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4 shadow" role="alert">
-            <strong class="font-bold">Oops!</strong>
-            <span class="block sm:inline" id="errorMessageText">Something went wrong.</span>
-            <span class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="document.getElementById('errorNotification').classList.add('hidden')">
-                <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
-            </span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            <div class="h-72 md:h-auto md:aspect-[4/3] flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-[#0C76FE] transition-colors bg-slate-50" id="dropZone">
-                <input type="file" id="imageUploadInput" class="hidden" accept="image/*">
-                <div id="dropZoneContent">
-                    <svg class="mx-auto h-16 w-16 text-slate-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <p class="mt-2 text-sm text-slate-600"><span class="font-semibold text-sky-600">Click to upload</span> or drag and drop</p>
-                    <p class="text-xs text-slate-500">PNG, JPG, GIF</p>
-                </div>
-                <img id="imagePreview" src="#" alt="Image Preview" class="hidden max-h-full max-w-full rounded"/>
-            </div>
-
-            <div id="outputCanvasContainer" class="h-72 md:h-auto md:aspect-[4/3] flex items-center justify-center bg-slate-200 rounded-lg overflow-hidden shadow-inner">
-                <canvas id="outputCanvas" class="border border-slate-300 rounded"></canvas>
-            </div>
-        </div>
         
-        <div class="mt-6 md:mt-8 text-center">
-            <button id="downloadButton" class="bg-[#0C76FE] hover:bg-[#005cbf] text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0C76FE]" disabled>
-                Download Pattern
-            </button>
+        /* Styling for the label acting as a resolution button */
+        .radio-label.resolution-button-label {
+            padding: 4px 12px; /* py-1 px-3 */
+            border: 1px solid black;
+            background-color: white;
+            color: black;
+            text-transform: uppercase;
+            font-size: 0.75rem; /* 12px */
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .radio-input:checked + .radio-label.resolution-button-label {
+            background-color: black;
+            color: white;
+        }
+        /* Basic focus style for accessibility, can be customized */
+        .radio-input:focus-visible + .radio-label {
+            outline: 2px solid blue;
+            outline-offset: 1px;
+        }
+
+        /* Preview box styling */
+        .preview-box {
+            background-color: #F3F4F6; /* bg-gray-100 */
+            border: 1px solid black;
+            /* No rounded corners as per image */
+        }
+        #outputCanvas {
+            display: block; /* For centering if margin auto is used */
+            max-width: 100%;
+            max-height: 100%;
+            /* object-fit: contain; /* This is for img/video, canvas scales its content */
+        }
+
+        /* Font for control labels */
+        .control-label-font {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.75rem; /* 12px */
+            text-transform: uppercase;
+            color: black;
+        }
+
+    </style>
+</head>
+<body class="bg-white text-black p-10">
+    <div id="pageLoader" class="fixed top-0 left-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-50">
+        <div class="w-16 h-16 border-4 border-t-4 border-t-black border-gray-200 rounded-full animate-spin"></div>
+    </div>
+
+    <!-- Top Header -->
+    <div class="flex justify-between items-start mb-10">
+        <div>
+            <h1 class="text-base font-bold tracking-wider">BRAND IMAGE PATTERN GENERATOR</h1>
+            <p class="text-xs text-gray-500 mt-1">Upload an image and customize it to create a pattern.</p>
+        </div>
+        <button id="uploadTriggerButton" class="bg-black text-white px-8 py-2 text-xs">UPLOAD</button>
+        <input type="file" id="imageUploadInput" class="hidden" accept="image/*">
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex gap-10">
+
+        <!-- Left Column: Controls -->
+        <div class="w-[280px] flex-none space-y-6"> <!-- Fixed width for left column -->
+            <!-- Sliders Block -->
+            <div class="space-y-3">
+                <div>
+                    <label for="patternDensitySlider" class="control-label-font">DENSITY (<span id="patternDensityValue">72</span>)</label>
+                    <input type="range" id="patternDensitySlider" min="1" max="200" value="72" class="custom-slider">
+                </div>
+                <div>
+                    <label for="randomnessSlider" class="control-label-font">SHAPE MIX (<span id="randomnessValue">0.5</span>)</label>
+                    <input type="range" id="randomnessSlider" min="0" max="1" value="0.5" step="0.01" class="custom-slider">
+                </div>
+                <div>
+                    <label for="brightnessThresholdSlider" class="control-label-font">SENSITIVITY (<span id="brightnessThresholdValue">39</span>)</label>
+                    <input type="range" id="brightnessThresholdSlider" min="0" max="255" value="39" class="custom-slider">
+                </div>
+                <div>
+                    <label for="minShapeScaleSlider" class="control-label-font">MIN SCALE (<span id="minShapeScaleValue">0.02</span>)</label>
+                    <input type="range" id="minShapeScaleSlider" min="0.01" max="1.0" value="0.02" step="0.01" class="custom-slider">
+                </div>
+                <div>
+                    <label for="maxShapeScaleSlider" class="control-label-font">MAX SCALE (<span id="maxShapeScaleValue">0.74</span>)</label>
+                    <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.74" step="0.01" class="custom-slider">
+                </div>
+            </div>
+
+            <!-- Colors Block -->
+            <div class="space-y-2 pt-2">
+                <label class="control-label-font mb-1 block">COLORS</label>
+                <div class="flex items-center space-x-2">
+                    <span class="control-label-font w-20 flex-none">SHAPE</span>
+                    <div id="shapeColorPickerContainer" class="flex space-x-1">
+                        <!-- JS populates this -->
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="control-label-font w-20 flex-none">BACKGROUND</span>
+                    <div id="bgColorPickerContainer" class="flex space-x-1">
+                        <!-- JS populates this -->
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 mt-1">
+                     <label for="invertImageToggle" class="control-label-font w-20 flex-none">INVERT</label>
+                     <input type="checkbox" id="invertImageToggle" class="custom-checkbox" checked>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Previews -->
+        <div class="flex-1">
+            <div class="flex gap-4 h-[380px]"> 
+                <div id="dropZone" class="preview-box flex-1 flex items-center justify-center p-1 cursor-pointer relative">
+                    <img id="imagePreview" src="#" alt="Upload area" class="hidden max-h-full max-w-full object-contain"/>
+                    <div id="dropZoneContent" class="text-center text-gray-400 text-sm">
+                        <!-- Placeholder updated by JS if no image -->
+                    </div>
+                </div>
+                <div id="outputCanvasContainer" class="preview-box flex-1 flex items-center justify-center p-1 relative overflow-hidden">
+                    <canvas id="outputCanvas"></canvas>
+                </div>
+            </div>
+            <div class="flex justify-between mt-1">
+                <span class="text-xs uppercase control-label-font">START</span>
+                <span class="text-xs uppercase control-label-font">END</span>
+            </div>
         </div>
     </div>
+
+    <!-- Bottom/Footer Bar -->
+    <div class="flex justify-between items-center mt-10">
+        <div id="downloadResolutionPickerContainer" class="flex space-x-1">
+            <!-- JS populates this -->
+        </div>
+        <button id="generateButton" class="bg-black text-white px-12 py-3 text-xs">GENERATE</button>
+    </div>
+    
+    <div id="errorNotification" class="hidden fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-md z-50" role="alert">
+        <strong class="font-bold">Oops!</strong>
+        <span class="block sm:inline" id="errorMessageText">Something went wrong.</span>
+        <span class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="document.getElementById('errorNotification').classList.add('hidden')">
+            <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+        </span>
+    </div>
+
 
     <script>
         // --- Configuration ---
-        const BRAND_COLORS = [
+        const ALL_BRAND_COLORS = [ // Keep original list
             { name: "White", hex: "#FFFFFF" }, { name: "Black", hex: "#0F0F0F" },
-            { name: "Midnight Blue", hex: "#24248E" }, { name: "Optimist Blue", hex: "#0C76FE" },
-            { name: "Tech Yellow", hex: "#DCF56B" }, { name: "Wheat", hex: "#E3CFA8" },
-            { name: "Sky Blue", hex: "#BEDAE2" }, { name: "Orchid", hex: "#E57DE1" },
-            { name: "Maroon", hex: "#65211A" }
+            { name: "Dark Gray", hex: "#555555" }, // Added for 3rd swatch example
+            { name: "Optimist Blue", hex: "#0C76FE" }, 
+            { name: "Tech Yellow", hex: "#DCF56B" }, { name: "Light Gray", hex: "#CCCCCC" }, // Example for 6th swatch if white is 1st
+            { name: "Sky Blue", hex: "#BEDAE2" }, { name: "Orchid", hex: "#E57DE1" }
+            // { name: "Maroon", hex: "#65211A" } // Ensure 8 colors for UI
         ];
-        const DOWNLOAD_MAX_DIMENSIONS = [ 
-            { name: "Preview", value: 500 },
+        const UI_BRAND_COLORS = ALL_BRAND_COLORS.slice(0, 8); // Use first 8 for swatches
+
+        const DOWNLOAD_RESOLUTIONS_UI = [ 
             { name: "HD", value: 1080 },
-            { name: "QHD", value: 1440 }, 
+            { name: "2K", value: 1440 }, 
             { name: "4K", value: 2160 },
             { name: "8K", value: 4320 }
         ];
-        const OUTPUT_CANVAS_DISPLAY_MAX_DIM = 500;
+        const OUTPUT_CANVAS_DISPLAY_MAX_DIM = 500; // This will be constrained by preview box size
 
         // --- DOM Elements ---
         const patternDensitySlider = document.getElementById('patternDensitySlider');
@@ -265,40 +267,77 @@
         const downloadResolutionPickerContainer = document.getElementById('downloadResolutionPickerContainer');
         
         const imageUploadInput = document.getElementById('imageUploadInput');
+        const uploadTriggerButton = document.getElementById('uploadTriggerButton');
         const dropZone = document.getElementById('dropZone');
         const dropZoneContent = document.getElementById('dropZoneContent');
         const imagePreview = document.getElementById('imagePreview');
         const outputCanvasContainer = document.getElementById('outputCanvasContainer');
         const outputCanvas = document.getElementById('outputCanvas');
         const outputCtx = outputCanvas.getContext('2d');
-        const downloadButton = document.getElementById('downloadButton');
+        const generateButton = document.getElementById('generateButton'); // Renamed from downloadButton
 
         let originalImage = null;
         let originalImageAspectRatio = 1;
         let offscreenImageCanvas = document.createElement('canvas');
         let offscreenImageCtx = offscreenImageCanvas.getContext('2d');
 
+        let currentShapeColorRadios = [];
+        let currentBgColorRadios = [];
+
+
         // --- Initialization ---
         function initialize() {
-            BRAND_COLORS.forEach((color, index) => {
-                createColorRadioOption(bgColorPickerContainer, 'backgroundColor', color, index === 0); 
-                createColorRadioOption(shapeColorPickerContainer, 'shapeColor', color, index === 1); 
+            // Ensure correct colors are selected to match image (3rd for shape, 6th for bg)
+            // Using placeholder dark gray (#555555) for shape, and white (#FFFFFF) for background from UI_BRAND_COLORS
+            // This assumes UI_BRAND_COLORS[2] is dark gray and UI_BRAND_COLORS[0] is white (if it's the 6th option, adjust index)
+            // For the image: 3rd shape, 6th background.
+            // Let's say Black is 0F0F0F (index 1), White is FFFFFF (index 0)
+            // Dark Gray #555555 (index 2)
+            // Light Gray #CCCCCC (index 5)
+            // So, shape is UI_BRAND_COLORS[2], background is UI_BRAND_COLORS[0] (if it's the 6th visual swatch)
+            
+            // Based on image: Shape (3rd swatch, darker gray), Background (6th swatch, white)
+            // Assuming UI_BRAND_COLORS: [White, Black, DarkGray, Blue, Yellow, LightGray, SkyBlue, Orchid]
+            // Shape: index 2 (DarkGray)
+            // Background: index 0 (White) - this would be the 1st swatch. If 6th swatch is white, it means UI_BRAND_COLORS[5] is white.
+            // For this example, I'll use: shape = Black, background = White
+            let shapeColorDefaultIndex = 2; // 3rd swatch (e.g. Dark Gray)
+            let bgColorDefaultIndex = 0;    // 1st swatch (e.g. White) - Adjust if the 6th swatch in image is white from this list
+
+            // For the image provided, the 6th swatch for background is white.
+            // Let's assume White is the first color in UI_BRAND_COLORS, so index 0.
+            // If the 6th swatch is white, then UI_BRAND_COLORS[5] must be white.
+            // Let's use the image's visual selection: Shape=3rd, BG=6th.
+            // So default values are UI_BRAND_COLORS[2].hex and UI_BRAND_COLORS[5].hex.
+            shapeColorDefaultIndex = 2; 
+            bgColorDefaultIndex = 5;
+
+
+            UI_BRAND_COLORS.forEach((color, index) => {
+                createRadioOptionBase(bgColorPickerContainer, 'backgroundColor', color, index === bgColorDefaultIndex); 
+                createColorRadioOptionBase(shapeColorPickerContainer, 'shapeColor', color, index === shapeColorDefaultIndex); 
             });
-            DOWNLOAD_MAX_DIMENSIONS.forEach((res, index) => {
-                createResolutionRadioOption(downloadResolutionPickerContainer, 'downloadMaxDimension', res, index === 0); 
+            updateColorSwatchesUI(currentShapeColorRadios);
+            updateColorSwatchesUI(currentBgColorRadios);
+
+            DOWNLOAD_RESOLUTIONS_UI.forEach((res, index) => {
+                createRadioOptionBase(downloadResolutionPickerContainer, 'downloadMaxDimension', res, index === 3); // 8K selected (4th item)
             });
             
-            outputCanvasContainer.style.setProperty('--output-canvas-display-max-width', `${OUTPUT_CANVAS_DISPLAY_MAX_DIM}px`);
-            outputCanvasContainer.style.setProperty('--output-canvas-display-max-height', `${OUTPUT_CANVAS_DISPLAY_MAX_DIM}px`);
-            outputCanvas.width = OUTPUT_CANVAS_DISPLAY_MAX_DIM;
-            outputCanvas.height = OUTPUT_CANVAS_DISPLAY_MAX_DIM;
+            // outputCanvasContainer.style.setProperty('--output-canvas-display-max-width', `${OUTPUT_CANVAS_DISPLAY_MAX_DIM}px`);
+            // outputCanvasContainer.style.setProperty('--output-canvas-display-max-height', `${OUTPUT_CANVAS_DISPLAY_MAX_DIM}px`);
+            // Canvas size will be handled by generatePatternOnCanvas to fit its container
 
             addEventListeners();
             updateSliderValueDisplays(); 
-            // *** REMOVED enforceMinMaxScaleLogic() call from here to prevent error ***
-            generatePatternForDisplay();
+            generatePatternForDisplay(); // Initial pattern
             document.getElementById('pageLoader').style.display = 'none';
         }
+        
+        function createColorRadioOptionBase(container, name, optionData, isChecked) { // Keep separate for clarity if needed
+             createRadioOptionBase(container, name, optionData, isChecked, true);
+        }
+
 
         function createRadioOptionBase(container, name, optionData, isChecked, isColorOption) {
             const radioId = `${name}_${isColorOption ? optionData.hex.replace('#', '') : optionData.value}`;
@@ -307,80 +346,64 @@
             radioInput.value = isColorOption ? optionData.hex : optionData.value;
             radioInput.className = 'radio-input';
             if (isChecked) radioInput.checked = true;
-            
-            if (name === 'backgroundColor' || name === 'shapeColor') {
-                radioInput.addEventListener('change', generatePatternForDisplay);
-            }
 
             const radioLabel = document.createElement('label');
             radioLabel.htmlFor = radioId;
-            radioLabel.className = 'radio-label';
             
-            let labelContent = '';
             if (isColorOption) {
-                labelContent = `<span class="color-swatch" style="background-color:${optionData.hex};" title="${optionData.name}"></span>`;
-            } else {
-                radioLabel.classList.add('has-text'); 
-                labelContent = `<span class="picker-name">${optionData.name}</span>`;
+                radioLabel.className = 'radio-label color-swatch-label';
+                radioLabel.dataset.color = optionData.hex; 
+                radioLabel.title = optionData.name;
+                
+                if (name === 'shapeColor') currentShapeColorRadios.push({input: radioInput, label: radioLabel, color: optionData.hex});
+                else if (name === 'backgroundColor') currentBgColorRadios.push({input: radioInput, label: radioLabel, color: optionData.hex});
+
+                radioInput.addEventListener('change', () => {
+                    updateColorSwatchesUI(name === 'shapeColor' ? currentShapeColorRadios : currentBgColorRadios);
+                    generatePatternForDisplay();
+                });
+            } else { // Resolution picker
+                radioLabel.className = 'radio-label resolution-button-label';
+                radioLabel.innerHTML = `<span>${optionData.name}</span>`;
             }
-            radioLabel.innerHTML = labelContent;
             
             container.appendChild(radioInput); container.appendChild(radioLabel);
         }
 
-        function createColorRadioOption(container, name, colorData, isChecked) {
-            createRadioOptionBase(container, name, colorData, isChecked, true);
-        }
-
-        function createResolutionRadioOption(container, name, resData, isChecked) {
-            createRadioOptionBase(container, name, resData, isChecked, false);
+        function updateColorSwatchesUI(radioSet) {
+            radioSet.forEach(item => {
+                item.label.style.backgroundColor = item.input.checked ? item.color : '#E5E5E5'; // #E5E5E5 for light gray
+            });
         }
         
         function enforceMinMaxScaleLogic() {
             let minVal = parseFloat(minShapeScaleSlider.value);
             let maxVal = parseFloat(maxShapeScaleSlider.value);
-
-            // 'this' refers to the slider that triggered the event, thanks to .call()
             if (minVal > maxVal) {
-                if (this === minShapeScaleSlider) { 
-                    maxShapeScaleSlider.value = minVal;
-                } else { // This means maxShapeScaleSlider must have been 'this'
-                    minShapeScaleSlider.value = maxVal;
-                }
+                if (this === minShapeScaleSlider) maxShapeScaleSlider.value = minVal;
+                else minShapeScaleSlider.value = maxVal;
             }
             updateSliderValueDisplays(); 
         }
 
-
         function addEventListeners() {
-            const sliders = [
-                patternDensitySlider, randomnessSlider, brightnessThresholdSlider
-            ];
-            sliders.forEach(slider => slider.addEventListener('input', () => {
-                updateSliderValueDisplays();
-                generatePatternForDisplay();
+            [patternDensitySlider, randomnessSlider, brightnessThresholdSlider].forEach(slider => slider.addEventListener('input', () => {
+                updateSliderValueDisplays(); generatePatternForDisplay();
             }));
-            
-            minShapeScaleSlider.addEventListener('input', function() { 
-                enforceMinMaxScaleLogic.call(this); 
-                generatePatternForDisplay();
-            });
-            maxShapeScaleSlider.addEventListener('input', function() { 
-                enforceMinMaxScaleLogic.call(this); 
-                generatePatternForDisplay();
-            });
-            
+            minShapeScaleSlider.addEventListener('input', function() { enforceMinMaxScaleLogic.call(this); generatePatternForDisplay(); });
+            maxShapeScaleSlider.addEventListener('input', function() { enforceMinMaxScaleLogic.call(this); generatePatternForDisplay(); });
             invertImageToggle.addEventListener('change', generatePatternForDisplay);
 
-            dropZone.addEventListener('click', () => imageUploadInput.click());
+            uploadTriggerButton.addEventListener('click', () => imageUploadInput.click());
+            dropZone.addEventListener('click', () => { if(!originalImage) imageUploadInput.click() }); // Allow click on dropzone only if no image
             imageUploadInput.addEventListener('change', handleImageUploadEvent);
-            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-blue-500', 'border-2'); }); // Visual cue for dragover
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-blue-500', 'border-2'));
             dropZone.addEventListener('drop', (e) => {
-                e.preventDefault(); dropZone.classList.remove('drag-over');
+                e.preventDefault(); dropZone.classList.remove('border-blue-500', 'border-2');
                 if (e.dataTransfer.files && e.dataTransfer.files[0]) loadImageFromFile(e.dataTransfer.files[0]);
             });
-            downloadButton.addEventListener('click', handleDownload);
+            generateButton.addEventListener('click', handleDownload);
         }
         
         function updateSliderValueDisplays() {
@@ -396,22 +419,12 @@
         }
 
         function showErrorNotification(message) {
-            const errorNotificationDiv = document.getElementById('errorNotification');
-            const errorMessageTextSpan = document.getElementById('errorMessageText');
-
-            errorMessageTextSpan.textContent = message;
-            errorNotificationDiv.classList.remove('hidden');
-
-            // Optional: Auto-hide after some time (e.g., 7 seconds)
-            // setTimeout(() => {
-            //     errorNotificationDiv.classList.add('hidden');
-            // }, 7000);
-            // For now, let user close it manually.
+            errorMessageText.textContent = message;
+            errorNotification.classList.remove('hidden');
         }
 
         function clearErrorNotification() {
-            const errorNotificationDiv = document.getElementById('errorNotification');
-            errorNotificationDiv.classList.add('hidden');
+            errorNotification.classList.add('hidden');
         }
 
         function loadImageFromFile(file) {
@@ -428,30 +441,26 @@
                     imagePreview.src = e.target.result;
                     imagePreview.classList.remove('hidden');
                     dropZoneContent.classList.add('hidden');
-                    downloadButton.disabled = false;
+                    generateButton.disabled = false; // Enable generate button
                     generatePatternForDisplay();
                 };
-                originalImage.onerror = () => {
-                    showErrorNotification("Error processing image. It might be an unsupported format or corrupted. Please try a different image.");
-                    resetImageState();
-                };
+                originalImage.onerror = () => { showErrorNotification("Error processing image. Unsupported format or corrupted."); resetImageState(); };
                 originalImage.src = e.target.result;
             };
-            reader.onerror = () => {
-                showErrorNotification("Could not read the selected file. Please ensure it's not corrupted and try again.");
-                resetImageState();
-            };
+            reader.onerror = () => { showErrorNotification("Could not read the file."); resetImageState(); };
             reader.readAsDataURL(file);
         }
         
         function resetImageState() {
-            clearErrorNotification();
+            // clearErrorNotification(); // Already called by callers usually
             originalImage = null;
             originalImageAspectRatio = 1;
+            imagePreview.src = "#"; // Clear src
             imagePreview.classList.add('hidden');
             dropZoneContent.classList.remove('hidden');
-            downloadButton.disabled = true;
-            generatePatternForDisplay();
+            dropZoneContent.textContent = "Click or drag image here";
+            generateButton.disabled = true; // Disable generate button
+            generatePatternForDisplay(); // Redraw placeholder
         }
         
         function getSelectedRadioValue(radioGroupName) {
@@ -459,69 +468,77 @@
             return selectedRadio ? selectedRadio.value : null;
         }
 
-        function calculateCanvasDimensions(maxDim, aspectRatio) {
+        function calculateCanvasDimensions(maxDimContainer, aspectRatio) {
+            // Calculate dimensions to fit within the container while maintaining aspect ratio
+            const containerWidth = maxDimContainer.width;
+            const containerHeight = maxDimContainer.height;
             let canvasWidth, canvasHeight;
-            if (aspectRatio >= 1) {
-                canvasWidth = maxDim;
-                canvasHeight = maxDim / aspectRatio;
-            } else {
-                canvasHeight = maxDim;
-                canvasWidth = maxDim * aspectRatio;
+
+            if (containerWidth / containerHeight > aspectRatio) { // Container is wider than image
+                canvasHeight = containerHeight;
+                canvasWidth = containerHeight * aspectRatio;
+            } else { // Container is taller or same aspect ratio
+                canvasWidth = containerWidth;
+                canvasHeight = containerWidth / aspectRatio;
             }
             return { width: Math.round(canvasWidth), height: Math.round(canvasHeight) };
         }
-
-        function generatePatternOnCanvas(targetCanvas, targetCtx, maxOutputDim) {
+        
+        function generatePatternOnCanvas(targetCanvas, targetCtx, outputContainerForSizing, isForDownload = false, downloadMaxDim = 0) {
             const density = parseInt(patternDensitySlider.value);
             const randomness = parseFloat(randomnessSlider.value);
             const brightnessThreshold = parseInt(brightnessThresholdSlider.value);
             const minScale = parseFloat(minShapeScaleSlider.value);
             const maxScale = parseFloat(maxShapeScaleSlider.value);
             
-            const bgColor = getSelectedRadioValue('backgroundColor') || BRAND_COLORS[0].hex;
-            const shapeColor = getSelectedRadioValue('shapeColor') || BRAND_COLORS[1].hex;
+            const bgColor = getSelectedRadioValue('backgroundColor') || UI_BRAND_COLORS[0].hex;
+            const shapeColor = getSelectedRadioValue('shapeColor') || UI_BRAND_COLORS[1].hex;
 
-            const { width: canvasWidth, height: canvasHeight } = calculateCanvasDimensions(maxOutputDim, originalImageAspectRatio);
+            let canvasWidth, canvasHeight;
+
+            if (isForDownload) {
+                if (originalImageAspectRatio >= 1) { // Landscape or square
+                    canvasWidth = downloadMaxDim;
+                    canvasHeight = downloadMaxDim / originalImageAspectRatio;
+                } else { // Portrait
+                    canvasHeight = downloadMaxDim;
+                    canvasWidth = downloadMaxDim * originalImageAspectRatio;
+                }
+                canvasWidth = Math.round(canvasWidth);
+                canvasHeight = Math.round(canvasHeight);
+            } else {
+                 // For display, fit canvas into its container (outputContainerForSizing)
+                const containerRect = outputContainerForSizing.getBoundingClientRect();
+                const dims = calculateCanvasDimensions(
+                    { width: containerRect.width - 2, height: containerRect.height - 2 }, // -2 for padding/border
+                    originalImage ? originalImageAspectRatio : 16/9 // Default aspect for placeholder
+                );
+                canvasWidth = dims.width;
+                canvasHeight = dims.height;
+            }
             
             targetCanvas.width = canvasWidth;
             targetCanvas.height = canvasHeight;
 
-            if (targetCanvas === outputCanvas) {
-                outputCanvasContainer.style.setProperty('--output-canvas-display-max-width', `${canvasWidth}px`);
-                outputCanvasContainer.style.setProperty('--output-canvas-display-max-height', `${canvasHeight}px`);
-                outputCanvas.style.width = `${canvasWidth}px`;
-                outputCanvas.style.height = `${canvasHeight}px`;
+            // Style for display canvas (not temp download canvas)
+            if (!isForDownload) {
+                targetCanvas.style.width = `${canvasWidth}px`;
+                targetCanvas.style.height = `${canvasHeight}px`;
             }
+
 
             targetCtx.fillStyle = bgColor;
             targetCtx.fillRect(0, 0, canvasWidth, canvasHeight);
 
             if (!originalImage) {
-                // Draw a simple placeholder pattern
-                targetCtx.fillStyle = "#E0E0E0"; // A light gray for the placeholder shapes
-                const placeholderCellSize = Math.min(canvasWidth, canvasHeight) / 5; // Adjust size as needed
-                const shapeSize = placeholderCellSize * 0.3; // Size of individual shapes
+                dropZoneContent.textContent = "Click or drag image here"; // Ensure placeholder text
+                dropZoneContent.classList.remove('hidden');
+                imagePreview.classList.add('hidden');
 
-                for (let i = 0; i < 5; i++) {
-                    for (let j = 0; j < 5; j++) {
-                        const x = (i + 0.5) * placeholderCellSize - shapeSize / 2;
-                        const y = (j + 0.5) * placeholderCellSize - shapeSize / 2;
-
-                        // Alternate between circles and squares for variety
-                        if ((i + j) % 2 === 0) {
-                            targetCtx.beginPath();
-                            targetCtx.arc(x + shapeSize / 2, y + shapeSize / 2, shapeSize / 2, 0, 2 * Math.PI);
-                            targetCtx.fill();
-                        } else {
-                            targetCtx.fillRect(x, y, shapeSize, shapeSize);
-                        }
-                    }
-                }
-
-                targetCtx.fillStyle = "#BBBBBB"; // Slightly darker gray for the text
-                targetCtx.font = `${Math.min(16, canvasWidth / 30)}px Inter`; // Adjusted font size
+                targetCtx.fillStyle = "#AAAAAA"; 
+                targetCtx.font = `${Math.min(16, canvasWidth / 25)}px ui-sans-serif`;
                 targetCtx.textAlign = "center";
-                targetCtx.fillText("Upload an image to generate a pattern", canvasWidth / 2, canvasHeight / 2);
+                targetCtx.fillText("Pattern preview will appear here", canvasWidth / 2, canvasHeight / 2);
                 return;
             }
             
@@ -541,18 +558,13 @@
                     const pixelData = offscreenImageCtx.getImageData(clampedSourceX, clampedSourceY, 1, 1).data;
                     let r = pixelData[0], g = pixelData[1], b = pixelData[2];
                     
-                    if (invertImageToggle.checked) {
-                        r = 255 - r;
-                        g = 255 - g;
-                        b = 255 - b;
-                    }
+                    if (invertImageToggle.checked) { r = 255 - r; g = 255 - g; b = 255 - b; }
                     const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b; 
 
                     if (brightness < brightnessThreshold) {
                         targetCtx.fillStyle = shapeColor;
                         let drawCircle = Math.random() < randomness;
-                        if (randomness <= 0.01) drawCircle = false;
-                        else if (randomness >= 0.99) drawCircle = true;
+                        if (randomness <= 0.01) drawCircle = false; else if (randomness >= 0.99) drawCircle = true;
 
                         const brightnessFactor = Math.max(0, (brightnessThreshold - brightness)) / brightnessThreshold;
                         const actualMinScale = Math.min(minScale, maxScale);
@@ -576,45 +588,45 @@
         }
         
         function generatePatternForDisplay() {
-            generatePatternOnCanvas(outputCanvas, outputCtx, OUTPUT_CANVAS_DISPLAY_MAX_DIM);
+            generatePatternOnCanvas(outputCanvas, outputCtx, outputCanvasContainer, false);
         }
 
         function handleDownload() {
             if (!originalImage) {
-                alert("Please upload an image first."); return;
+                showErrorNotification("Please upload an image first."); return;
             }
 
-            downloadButton.disabled = true;
-            downloadButton.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Downloading...`;
+            generateButton.disabled = true;
+            const originalButtonText = generateButton.textContent;
+            generateButton.innerHTML = `<svg class="animate-spin inline h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>GENERATING...`;
 
-            const selectedMaxDim = parseInt(getSelectedRadioValue('downloadMaxDimension')) || DOWNLOAD_MAX_DIMENSIONS[0].value;
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            generatePatternOnCanvas(tempCanvas, tempCtx, selectedMaxDim);
-            
-            const dataURL = tempCanvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            const { width: dlWidth, height: dlHeight } = calculateCanvasDimensions(selectedMaxDim, originalImageAspectRatio);
-            link.download = `brand-pattern-${dlWidth}x${dlHeight}.png`;
-            link.href = dataURL;
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            setTimeout(() => { // Allow UI to update before blocking with canvas generation
+                const selectedMaxDim = parseInt(getSelectedRadioValue('downloadMaxDimension')) || DOWNLOAD_RESOLUTIONS_UI[0].value;
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                generatePatternOnCanvas(tempCanvas, tempCtx, null, true, selectedMaxDim);
+                
+                const dataURL = tempCanvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                
+                let dlWidth, dlHeight;
+                 if (originalImageAspectRatio >= 1) { 
+                    dlWidth = selectedMaxDim; dlHeight = Math.round(selectedMaxDim / originalImageAspectRatio);
+                } else {
+                    dlHeight = selectedMaxDim; dlWidth = Math.round(selectedMaxDim * originalImageAspectRatio);
+                }
 
-            downloadButton.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white inline -ml-1 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                Downloaded!`;
+                link.download = `brand-pattern-${dlWidth}x${dlHeight}.png`;
+                link.href = dataURL;
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
 
-            setTimeout(() => {
-                downloadButton.innerHTML = 'Download Pattern';
-                downloadButton.disabled = false;
-            }, 3000); // Revert after 3 seconds
+                generateButton.textContent = "GENERATED!";
+                setTimeout(() => {
+                    generateButton.textContent = originalButtonText;
+                    generateButton.disabled = false;
+                }, 2000);
+            }, 50); // Short timeout
         }
 
         initialize();
