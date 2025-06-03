@@ -40,7 +40,7 @@
 
         .radio-input { opacity: 0; width: 0; height: 0; position: absolute; }
 
-        /* Shape Color Swatches */
+        /* Visual Color Swatches (for Shape and Background) */
         .radio-label.color-swatch-label {
             width: 20px; height: 20px; border: 1px solid #CCCCCC; /* Default light gray border */
             cursor: pointer; display: block; box-sizing: border-box;
@@ -50,7 +50,7 @@
             outline-offset: 1px; 
         }
 
-        /* Text-based Buttons (Resolution and Background Color) */
+        /* Text-based Buttons (Resolution Picker) */
         .radio-label.text-button-label {
             padding: 4px 10px; border: 1px solid black;
             background-color: white; color: black; text-transform: uppercase;
@@ -125,7 +125,9 @@
                     </div>
                     <div class="flex items-center space-x-2">
                         <span class="control-label w-24 flex-none">BACKGROUND</span>
-                        <div id="bgColorPickerContainer" class="flex flex-wrap gap-1"></div>
+                        <div id="bgColorPickerContainer" class="flex flex-wrap gap-1 space-x-1"> <!-- Added space-x-1 for consistency -->
+                            <!-- JS populates background color visual swatches -->
+                        </div>
                     </div>
                     <div class="flex items-center space-x-2 mt-1">
                          <label for="invertImageToggle" class="control-label w-24 flex-none">INVERT</label>
@@ -179,9 +181,8 @@
             { name: "4K", value: 2160 }, { name: "8K", value: 4320 }
         ];
 
-        // Updated Default Selections (user request + input_file_0.png for colors/res)
         const DEFAULT_SHAPE_COLOR_INDEX = 1; // 2nd swatch (Black) from input_file_0.png
-        const DEFAULT_BG_COLOR_NAME = "White"; // "WHITE" from input_file_0.png
+        const DEFAULT_BG_COLOR_INDEX = 0;    // "WHITE" from input_file_0.png, which is index 0
         const DEFAULT_RESOLUTION_INDEX = 3; // 8K (4th item) from input_file_0.png
 
         const patternDensitySlider = document.getElementById('patternDensitySlider');
@@ -218,22 +219,19 @@
         let offscreenImageCtx = offscreenImageCanvas.getContext('2d');
 
         function initialize() {
-            // Set initial slider values from user defaults
             patternDensitySlider.value = 130;
             randomnessSlider.value = 0.50;
             brightnessThresholdSlider.value = 90;
             minShapeScaleSlider.value = 0.10;
             maxShapeScaleSlider.value = 0.70;
-            invertImageToggle.checked = false; // User default
-
-            const defaultBgColorObj = BRAND_COLORS_CONFIG.find(c => c.name === DEFAULT_BG_COLOR_NAME);
-            const defaultBgColorIndex = defaultBgColorObj ? BRAND_COLORS_CONFIG.indexOf(defaultBgColorObj) : 0;
+            invertImageToggle.checked = false;
 
             BRAND_COLORS_CONFIG.forEach((color, index) => {
                 createRadioOption(shapeColorPickerContainer, 'shapeColor', color, index === DEFAULT_SHAPE_COLOR_INDEX, 'visualSwatch');
             });
+            // Use 'visualSwatch' for background colors as well
             BRAND_COLORS_CONFIG.forEach((color, index) => {
-                createRadioOption(bgColorPickerContainer, 'backgroundColor', color, index === defaultBgColorIndex, 'textButton');
+                createRadioOption(bgColorPickerContainer, 'backgroundColor', color, index === DEFAULT_BG_COLOR_INDEX, 'visualSwatch');
             });
             DOWNLOAD_RESOLUTIONS_CONFIG.forEach((res, index) => {
                 createRadioOption(downloadResolutionPickerContainer, 'downloadMaxDimension', res, index === DEFAULT_RESOLUTION_INDEX, 'textButton');
@@ -246,29 +244,29 @@
         }
         
         function createRadioOption(container, name, optionData, isChecked, type) {
-            const uniqueIdPart = type === 'visualSwatch' ? optionData.hex.replace('#', '') : (optionData.value || optionData.name.replace(/\s+/g, ''));
+            const uniqueIdPart = (type === 'visualSwatch' || name === 'backgroundColor') 
+                               ? optionData.hex.replace('#', '') 
+                               : (optionData.value || optionData.name.replace(/\s+/g, ''));
             const radioId = `${name}_${uniqueIdPart}`;
             
             const radioInput = document.createElement('input');
             radioInput.type = 'radio'; radioInput.id = radioId; radioInput.name = name;
-            radioInput.value = (type === 'visualSwatch' || name === 'backgroundColor') ? optionData.hex : optionData.value;
+            radioInput.value = (type === 'visualSwatch') ? optionData.hex : optionData.value; // All visual swatches use hex
             radioInput.className = 'radio-input';
             if (isChecked) radioInput.checked = true;
 
             const radioLabel = document.createElement('label');
             radioLabel.htmlFor = radioId;
             
-            if (type === 'visualSwatch') {
+            if (type === 'visualSwatch') { // For SHAPE and BACKGROUND color
                 radioLabel.className = 'radio-label color-swatch-label';
                 radioLabel.style.backgroundColor = optionData.hex;
                 radioLabel.title = optionData.name;
                 radioInput.addEventListener('change', generatePatternForDisplay);
-            } else if (type === 'textButton') {
+            } else if (type === 'textButton') { // For RESOLUTION
                 radioLabel.className = 'radio-label text-button-label';
                 radioLabel.innerHTML = `<span>${optionData.name.toUpperCase()}</span>`;
-                 if (name === 'backgroundColor') {
-                    radioInput.addEventListener('change', generatePatternForDisplay);
-                }
+                 // No automatic re-render for resolution changes, only on generate button click
             }
             container.appendChild(radioInput); container.appendChild(radioLabel);
         }
