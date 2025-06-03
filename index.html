@@ -9,132 +9,72 @@
         body {
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
             overscroll-behavior: none;
-            background-color: #FFFFFF; /* White page background */
-            color: #000000; /* Black text */
+            background-color: #FFFFFF; 
+            color: #000000; 
         }
         
-        /* Custom Slider Styles from input_file_0.png */
         .custom-slider {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 100%;
-            height: 2px; 
-            background: #000000; /* Black track */
-            outline: none;
-            margin-top: 6px; 
+            -webkit-appearance: none; appearance: none; width: 100%; height: 2px; 
+            background: #000000; outline: none; margin-top: 6px; 
         }
         .custom-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 14px; 
-            height: 14px; 
-            background: #000000; /* Black thumb */
-            border-radius: 50%;
-            cursor: pointer;
+            -webkit-appearance: none; appearance: none; width: 14px; height: 14px; 
+            background: #000000; border-radius: 50%; cursor: pointer;
         }
         .custom-slider::-moz-range-thumb {
-            width: 14px;
-            height: 14px;
-            background: #000000;
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
+            width: 14px; height: 14px; background: #000000;
+            border-radius: 50%; cursor: pointer; border: none;
         }
 
-        /* Custom Checkbox for Invert (matches input_file_0.png style) */
         .custom-checkbox {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            width: 20px; 
-            height: 20px; 
-            background-color: white;
-            border: 1px solid black;
-            cursor: pointer;
-            position: relative;
-            display: inline-block;
-            vertical-align: middle;
+            appearance: none; -webkit-appearance: none; -moz-appearance: none;
+            width: 20px; height: 20px; background-color: white;
+            border: 1px solid black; cursor: pointer; position: relative;
+            display: inline-block; vertical-align: middle;
         }
         .custom-checkbox:checked::after {
-            content: ''; 
-            position: absolute;
-            left: 6px; /* Adjust for checkmark centering */
-            top: 3px;  /* Adjust for checkmark centering */
-            width: 5px;
-            height: 10px;
-            border: solid black;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
+            content: ''; position: absolute; left: 6px; top: 3px;
+            width: 5px; height: 10px; border: solid black;
+            border-width: 0 2px 2px 0; transform: rotate(45deg);
         }
 
-        /* Radio button base (hidden) */
-        .radio-input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-            position: absolute;
-        }
+        .radio-input { opacity: 0; width: 0; height: 0; position: absolute; }
 
-        /* Styling for SHAPE color swatches */
+        /* Shape Color Swatches */
         .radio-label.color-swatch-label {
-            width: 20px;
-            height: 20px;
-            border: 1px solid #CCCCCC; /* Thin light gray border for all shape swatches */
-            cursor: pointer;
-            display: block; 
-            box-sizing: border-box;
+            width: 20px; height: 20px; border: 1px solid #CCCCCC; /* Default light gray border */
+            cursor: pointer; display: block; box-sizing: border-box;
         }
-        /* No special :checked style needed if selection is just showing the color */
+        .radio-input:checked + .radio-label.color-swatch-label {
+            outline: 2px solid #000000; /* Black outline for selected */
+            outline-offset: 1px; 
+        }
 
-        /* Styling for text-based buttons (Resolution and BACKGROUND Color) */
+        /* Text-based Buttons (Resolution and Background Color) */
         .radio-label.text-button-label {
-            padding: 4px 10px; /* Adjusted padding */
-            border: 1px solid black;
-            background-color: white;
-            color: black;
-            text-transform: uppercase;
-            font-size: 0.75rem; /* 12px */
+            padding: 4px 10px; border: 1px solid black;
+            background-color: white; color: black; text-transform: uppercase;
+            font-size: 0.75rem; 
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-            cursor: pointer;
-            white-space: nowrap;
-            text-align: center;
+            cursor: pointer; white-space: nowrap; text-align: center;
         }
         .radio-input:checked + .radio-label.text-button-label {
-            background-color: black;
-            color: white;
+            background-color: black; color: white;
         }
         
-        /* Preview box styling from input_file_0.png */
         .preview-box {
-            background-color: #F3F4F6; /* bg-gray-100 */
-            border: 1px solid black;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative; /* For canvas positioning */
-            overflow: hidden; /* To contain canvas */
+            background-color: #F3F4F6; border: 1px solid black;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden; 
         }
-        #outputCanvas {
-            display: block; 
-            max-width: 100%;
-            max-height: 100%;
-        }
+        #outputCanvas { display: block; max-width: 100%; max-height: 100%; }
 
-        /* Font for control labels (sliders, COLORS sections) */
         .control-label {
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-            font-size: 0.75rem; /* 12px */
-            text-transform: uppercase;
-            color: black;
-            display: block;
-            margin-bottom: 0.125rem; /* Tiny space before slider/control group */
+            font-size: 0.75rem; text-transform: uppercase; color: black;
+            display: block; margin-bottom: 0.125rem; 
         }
-        .page-container {
-            max-width: 1600px; /* Max width for very large screens */
-            margin-left: auto;
-            margin-right: auto;
-        }
-
+        .page-container { max-width: 1600px; margin-left: auto; margin-right: auto; }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-10">
@@ -143,7 +83,6 @@
     </div>
 
     <div class="page-container">
-        <!-- Top Header -->
         <div class="flex justify-between items-start mb-6 md:mb-10">
             <div>
                 <h1 class="text-sm sm:text-base font-bold tracking-wider">BRAND IMAGE PATTERN GENERATOR</h1>
@@ -153,58 +92,48 @@
             <input type="file" id="imageUploadInput" class="hidden" accept="image/*">
         </div>
 
-        <!-- Main Content Area: Flex container for controls and previews -->
         <div class="flex flex-col lg:flex-row gap-6 md:gap-10">
-
-            <!-- Left Column: Controls -->
             <div class="lg:w-[280px] lg:flex-none space-y-5">
-                <!-- Sliders Block -->
                 <div class="space-y-3">
                     <div>
-                        <label for="patternDensitySlider" class="control-label">DENSITY (<span id="patternDensityValue">148</span>)</label>
-                        <input type="range" id="patternDensitySlider" min="1" max="200" value="148" class="custom-slider">
+                        <label for="patternDensitySlider" class="control-label">DENSITY (<span id="patternDensityValue">130</span>)</label>
+                        <input type="range" id="patternDensitySlider" min="1" max="200" value="130" class="custom-slider">
                     </div>
                     <div>
-                        <label for="randomnessSlider" class="control-label">SHAPE MIX (<span id="randomnessValue">0.33</span>)</label>
-                        <input type="range" id="randomnessSlider" min="0" max="1" value="0.33" step="0.01" class="custom-slider">
+                        <label for="randomnessSlider" class="control-label">SHAPE MIX (<span id="randomnessValue">0.50</span>)</label>
+                        <input type="range" id="randomnessSlider" min="0" max="1" value="0.50" step="0.01" class="custom-slider">
                     </div>
                     <div>
-                        <label for="brightnessThresholdSlider" class="control-label">SENSITIVITY (<span id="brightnessThresholdValue">73</span>)</label>
-                        <input type="range" id="brightnessThresholdSlider" min="0" max="255" value="73" class="custom-slider">
+                        <label for="brightnessThresholdSlider" class="control-label">SENSITIVITY (<span id="brightnessThresholdValue">90</span>)</label>
+                        <input type="range" id="brightnessThresholdSlider" min="0" max="255" value="90" class="custom-slider">
                     </div>
                     <div>
-                        <label for="minShapeScaleSlider" class="control-label">MIN SCALE (<span id="minShapeScaleValue">0.38</span>)</label>
-                        <input type="range" id="minShapeScaleSlider" min="0.01" max="1.0" value="0.38" step="0.01" class="custom-slider">
+                        <label for="minShapeScaleSlider" class="control-label">MIN SCALE (<span id="minShapeScaleValue">0.10</span>)</label>
+                        <input type="range" id="minShapeScaleSlider" min="0.01" max="1.0" value="0.10" step="0.01" class="custom-slider">
                     </div>
                     <div>
-                        <label for="maxShapeScaleSlider" class="control-label">MAX SCALE (<span id="maxShapeScaleValue">0.38</span>)</label>
-                        <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.38" step="0.01" class="custom-slider">
+                        <label for="maxShapeScaleSlider" class="control-label">MAX SCALE (<span id="maxShapeScaleValue">0.70</span>)</label>
+                        <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.70" step="0.01" class="custom-slider">
                     </div>
                 </div>
 
-                <!-- Colors Block -->
                 <div class="space-y-3 pt-2">
                     <label class="control-label">COLORS</label>
                     <div class="flex items-center space-x-2">
                         <span class="control-label w-24 flex-none">SHAPE</span>
-                        <div id="shapeColorPickerContainer" class="flex space-x-1">
-                            <!-- JS populates shape color swatches -->
-                        </div>
+                        <div id="shapeColorPickerContainer" class="flex space-x-1"></div>
                     </div>
                     <div class="flex items-center space-x-2">
                         <span class="control-label w-24 flex-none">BACKGROUND</span>
-                        <div id="bgColorPickerContainer" class="flex flex-wrap gap-1">
-                            <!-- JS populates background color text buttons -->
-                        </div>
+                        <div id="bgColorPickerContainer" class="flex flex-wrap gap-1"></div>
                     </div>
                     <div class="flex items-center space-x-2 mt-1">
                          <label for="invertImageToggle" class="control-label w-24 flex-none">INVERT</label>
-                         <input type="checkbox" id="invertImageToggle" class="custom-checkbox" checked>
+                         <input type="checkbox" id="invertImageToggle" class="custom-checkbox">
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column: Previews -->
             <div class="flex-1">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-[280px] sm:h-[320px] md:h-[380px] lg:h-[420px]"> 
                     <div id="dropZone" class="preview-box cursor-pointer">
@@ -224,11 +153,8 @@
             </div>
         </div>
 
-        <!-- Bottom/Footer Bar -->
         <div class="flex flex-col sm:flex-row justify-between items-center mt-6 md:mt-10 gap-4">
-            <div id="downloadResolutionPickerContainer" class="flex flex-wrap justify-center sm:justify-start gap-1">
-                <!-- JS populates resolution buttons -->
-            </div>
+            <div id="downloadResolutionPickerContainer" class="flex flex-wrap justify-center sm:justify-start gap-1"></div>
             <button id="generateButton" class="bg-black text-white px-10 py-3 sm:px-12 text-xs hover:bg-gray-800 transition-colors w-full sm:w-auto">GENERATE</button>
         </div>
         
@@ -241,28 +167,23 @@
         </div>
     </div>
 
-
     <script>
-        // --- Configuration (Matches input_file_0.png) ---
         const BRAND_COLORS_CONFIG = [ 
             { name: "White", hex: "#FFFFFF" }, { name: "Black", hex: "#0F0F0F" },
             { name: "Dark Gray", hex: "#555555" }, { name: "Optimist Blue", hex: "#0C76FE" },
             { name: "Tech Yellow", hex: "#DCF56B" }, { name: "Light Gray", hex: "#CCCCCC" },
             { name: "Sky Blue", hex: "#BEDAE2" }, { name: "Orchid", hex: "#E57DE1" }
-            // Ensure at least 8 for the UI in input_file_0.png
         ];
         const DOWNLOAD_RESOLUTIONS_CONFIG = [ 
             { name: "HD", value: 1080 }, { name: "2K", value: 1440 }, 
             { name: "4K", value: 2160 }, { name: "8K", value: 4320 }
         ];
 
-        // Default Selections from input_file_0.png
-        const DEFAULT_SHAPE_COLOR_INDEX = 2; // 3rd swatch (Dark Gray)
-        const DEFAULT_BG_COLOR_NAME = "Light Gray"; // Text name "Light Gray"
-        const DEFAULT_RESOLUTION_INDEX = 3; // 8K (4th item)
+        // Updated Default Selections (user request + input_file_0.png for colors/res)
+        const DEFAULT_SHAPE_COLOR_INDEX = 1; // 2nd swatch (Black) from input_file_0.png
+        const DEFAULT_BG_COLOR_NAME = "White"; // "WHITE" from input_file_0.png
+        const DEFAULT_RESOLUTION_INDEX = 3; // 8K (4th item) from input_file_0.png
 
-
-        // --- DOM Elements ---
         const patternDensitySlider = document.getElementById('patternDensitySlider');
         const patternDensityValueDisplay = document.getElementById('patternDensityValue');
         const randomnessSlider = document.getElementById('randomnessSlider');
@@ -291,25 +212,29 @@
         const errorNotification = document.getElementById('errorNotification');
         const errorMessageText = document.getElementById('errorMessageText');
 
-
         let originalImage = null;
         let originalImageAspectRatio = 1;
         let offscreenImageCanvas = document.createElement('canvas');
         let offscreenImageCtx = offscreenImageCanvas.getContext('2d');
 
-        // --- Initialization ---
         function initialize() {
-            const defaultBgColorIndex = BRAND_COLORS_CONFIG.findIndex(c => c.name === DEFAULT_BG_COLOR_NAME);
+            // Set initial slider values from user defaults
+            patternDensitySlider.value = 130;
+            randomnessSlider.value = 0.50;
+            brightnessThresholdSlider.value = 90;
+            minShapeScaleSlider.value = 0.10;
+            maxShapeScaleSlider.value = 0.70;
+            invertImageToggle.checked = false; // User default
 
-            // Populate Shape Color Pickers (Visual Swatches)
+            const defaultBgColorObj = BRAND_COLORS_CONFIG.find(c => c.name === DEFAULT_BG_COLOR_NAME);
+            const defaultBgColorIndex = defaultBgColorObj ? BRAND_COLORS_CONFIG.indexOf(defaultBgColorObj) : 0;
+
             BRAND_COLORS_CONFIG.forEach((color, index) => {
                 createRadioOption(shapeColorPickerContainer, 'shapeColor', color, index === DEFAULT_SHAPE_COLOR_INDEX, 'visualSwatch');
             });
-            // Populate Background Color Pickers (Text Buttons)
             BRAND_COLORS_CONFIG.forEach((color, index) => {
                 createRadioOption(bgColorPickerContainer, 'backgroundColor', color, index === defaultBgColorIndex, 'textButton');
             });
-            // Populate Resolution Pickers (Text Buttons)
             DOWNLOAD_RESOLUTIONS_CONFIG.forEach((res, index) => {
                 createRadioOption(downloadResolutionPickerContainer, 'downloadMaxDimension', res, index === DEFAULT_RESOLUTION_INDEX, 'textButton');
             });
@@ -325,9 +250,7 @@
             const radioId = `${name}_${uniqueIdPart}`;
             
             const radioInput = document.createElement('input');
-            radioInput.type = 'radio';
-            radioInput.id = radioId;
-            radioInput.name = name;
+            radioInput.type = 'radio'; radioInput.id = radioId; radioInput.name = name;
             radioInput.value = (type === 'visualSwatch' || name === 'backgroundColor') ? optionData.hex : optionData.value;
             radioInput.className = 'radio-input';
             if (isChecked) radioInput.checked = true;
@@ -335,21 +258,19 @@
             const radioLabel = document.createElement('label');
             radioLabel.htmlFor = radioId;
             
-            if (type === 'visualSwatch') { // For SHAPE color
+            if (type === 'visualSwatch') {
                 radioLabel.className = 'radio-label color-swatch-label';
                 radioLabel.style.backgroundColor = optionData.hex;
                 radioLabel.title = optionData.name;
                 radioInput.addEventListener('change', generatePatternForDisplay);
-            } else if (type === 'textButton') { // For BACKGROUND color & RESOLUTION
+            } else if (type === 'textButton') {
                 radioLabel.className = 'radio-label text-button-label';
                 radioLabel.innerHTML = `<span>${optionData.name.toUpperCase()}</span>`;
-                 if (name === 'backgroundColor') { // only background color text buttons trigger re-gen
+                 if (name === 'backgroundColor') {
                     radioInput.addEventListener('change', generatePatternForDisplay);
                 }
             }
-            
-            container.appendChild(radioInput);
-            container.appendChild(radioLabel);
+            container.appendChild(radioInput); container.appendChild(radioLabel);
         }
         
         function enforceMinMaxScaleLogic() {
@@ -363,11 +284,16 @@
         }
 
         function addEventListeners() {
-            [patternDensitySlider, randomnessSlider, brightnessThresholdSlider].forEach(slider => slider.addEventListener('input', () => {
-                updateSliderValueDisplays(); generatePatternForDisplay();
-            }));
-            minShapeScaleSlider.addEventListener('input', function() { enforceMinMaxScaleLogic.call(this); generatePatternForDisplay(); });
-            maxShapeScaleSlider.addEventListener('input', function() { enforceMinMaxScaleLogic.call(this); generatePatternForDisplay(); });
+            [patternDensitySlider, randomnessSlider, brightnessThresholdSlider, minShapeScaleSlider, maxShapeScaleSlider].forEach(slider => {
+                slider.addEventListener('input', () => {
+                    if (slider === minShapeScaleSlider || slider === maxShapeScaleSlider) {
+                        enforceMinMaxScaleLogic.call(slider);
+                    } else {
+                        updateSliderValueDisplays();
+                    }
+                    generatePatternForDisplay();
+                });
+            });
             invertImageToggle.addEventListener('change', generatePatternForDisplay);
 
             uploadTriggerButton.addEventListener('click', () => imageUploadInput.click());
@@ -395,12 +321,9 @@
         }
 
         function showErrorNotification(message) {
-            errorMessageText.textContent = message;
-            errorNotification.classList.remove('hidden');
+            errorMessageText.textContent = message; errorNotification.classList.remove('hidden');
         }
-        function clearErrorNotification() {
-            errorNotification.classList.add('hidden');
-        }
+        function clearErrorNotification() { errorNotification.classList.add('hidden'); }
 
         function loadImageFromFile(file) {
             const reader = new FileReader();
@@ -427,14 +350,11 @@
         }
         
         function resetImageState() {
-            originalImage = null;
-            originalImageAspectRatio = 1;
-            imagePreview.src = "#";
-            imagePreview.classList.add('hidden');
+            originalImage = null; originalImageAspectRatio = 1;
+            imagePreview.src = "#"; imagePreview.classList.add('hidden');
             dropZoneContent.classList.remove('hidden');
             dropZoneContent.textContent = "Click or drag image here";
-            generateButton.disabled = true;
-            generatePatternForDisplay();
+            generateButton.disabled = true; generatePatternForDisplay();
         }
         
         function getSelectedRadioValue(radioGroupName) {
@@ -444,16 +364,13 @@
 
         function calculateDisplayCanvasDimensions(container, aspectRatio) {
             const containerRect = container.getBoundingClientRect();
-            const containerWidth = containerRect.width - 2; // Account for 1px border on each side
-            const containerHeight = containerRect.height - 2; // Account for 1px border on each side
+            const containerWidth = containerRect.width - 2; 
+            const containerHeight = containerRect.height - 2;
             let canvasWidth, canvasHeight;
-
             if (containerWidth / containerHeight > aspectRatio) {
-                canvasHeight = containerHeight;
-                canvasWidth = containerHeight * aspectRatio;
+                canvasHeight = containerHeight; canvasWidth = containerHeight * aspectRatio;
             } else {
-                canvasWidth = containerWidth;
-                canvasHeight = containerWidth / aspectRatio;
+                canvasWidth = containerWidth; canvasHeight = containerWidth / aspectRatio;
             }
             return { width: Math.max(1, Math.round(canvasWidth)), height: Math.max(1, Math.round(canvasHeight)) };
         }
@@ -469,40 +386,30 @@
             const shapeColor = getSelectedRadioValue('shapeColor') || BRAND_COLORS_CONFIG[1].hex;
 
             let canvasWidth, canvasHeight;
-
             if (isForDownload) {
                 const ar = originalImage ? originalImageAspectRatio : 1;
-                if (ar >= 1) { 
-                    canvasWidth = downloadMaxDim; canvasHeight = downloadMaxDim / ar;
-                } else {
-                    canvasHeight = downloadMaxDim; canvasWidth = downloadMaxDim * ar;
-                }
+                if (ar >= 1) { canvasWidth = downloadMaxDim; canvasHeight = downloadMaxDim / ar; } 
+                else { canvasHeight = downloadMaxDim; canvasWidth = downloadMaxDim * ar; }
                 canvasWidth = Math.round(canvasWidth); canvasHeight = Math.round(canvasHeight);
             } else {
-                const ar = originalImage ? originalImageAspectRatio : (16/9); // Default aspect for placeholder
+                const ar = originalImage ? originalImageAspectRatio : (16/9);
                 const dims = calculateDisplayCanvasDimensions(targetCanvas.parentElement, ar);
-                canvasWidth = dims.width;
-                canvasHeight = dims.height;
+                canvasWidth = dims.width; canvasHeight = dims.height;
             }
             
-            targetCanvas.width = canvasWidth;
-            targetCanvas.height = canvasHeight;
-
-            if (!isForDownload) { // Style display canvas to fit centered
-                targetCanvas.style.width = `${canvasWidth}px`;
-                targetCanvas.style.height = `${canvasHeight}px`;
+            targetCanvas.width = canvasWidth; targetCanvas.height = canvasHeight;
+            if (!isForDownload) {
+                targetCanvas.style.width = `${canvasWidth}px`; targetCanvas.style.height = `${canvasHeight}px`;
             }
 
             targetCtx.fillStyle = bgColor;
             targetCtx.fillRect(0, 0, canvasWidth, canvasHeight);
 
             if (!originalImage) {
-                if (!isForDownload) { // Only draw placeholder text on display canvas
+                if (!isForDownload) {
                     dropZoneContent.textContent = "Click or drag image here"; 
-                    dropZoneContent.classList.remove('hidden');
-                    imagePreview.classList.add('hidden');
-
-                    targetCtx.fillStyle = "#6B7280"; // text-gray-500
+                    dropZoneContent.classList.remove('hidden'); imagePreview.classList.add('hidden');
+                    targetCtx.fillStyle = "#6B7280"; 
                     const fontSize = Math.min(16, Math.max(10, canvasWidth / 28));
                     targetCtx.font = `${fontSize}px ui-sans-serif, system-ui`;
                     targetCtx.textAlign = "center";
@@ -536,7 +443,7 @@
                         if (randomness <= 0.01) drawCircle = false; else if (randomness >= 0.99) drawCircle = true;
 
                         const brightnessFactor = Math.max(0, (brightnessThreshold - brightness)) / brightnessThreshold;
-                        const actualMinScale = Math.min(minScale, maxScale); // Ensure min is not > max
+                        const actualMinScale = Math.min(minScale, maxScale);
                         const actualMaxScale = Math.max(minScale, maxScale);
                         const currentShapeScaleRatio = actualMinScale + brightnessFactor * (actualMaxScale - actualMinScale);
                         
@@ -556,14 +463,10 @@
             }
         }
         
-        function generatePatternForDisplay() {
-            generatePatternOnCanvas(outputCanvas, outputCtx, false);
-        }
+        function generatePatternForDisplay() { generatePatternOnCanvas(outputCanvas, outputCtx, false); }
 
         function handleDownload() {
-            if (!originalImage) {
-                showErrorNotification("Please upload an image first."); return;
-            }
+            if (!originalImage) { showErrorNotification("Please upload an image first."); return; }
 
             generateButton.disabled = true;
             const originalButtonText = generateButton.textContent;
@@ -573,39 +476,30 @@
                 const selectedMaxDim = parseInt(getSelectedRadioValue('downloadMaxDimension')) || DOWNLOAD_RESOLUTIONS_CONFIG[0].value;
                 const tempCanvas = document.createElement('canvas');
                 const tempCtx = tempCanvas.getContext('2d');
-                
                 generatePatternOnCanvas(tempCanvas, tempCtx, true, selectedMaxDim);
                 
                 const dataURL = tempCanvas.toDataURL('image/png');
                 const link = document.createElement('a');
-                
                 let dlWidth, dlHeight;
                  if (originalImageAspectRatio >= 1) { 
                     dlWidth = selectedMaxDim; dlHeight = Math.round(selectedMaxDim / originalImageAspectRatio);
                 } else {
                     dlHeight = selectedMaxDim; dlWidth = Math.round(selectedMaxDim * originalImageAspectRatio);
                 }
-
                 link.download = `brand-pattern-${dlWidth}x${dlHeight}.png`;
-                link.href = dataURL;
-                document.body.appendChild(link); link.click(); document.body.removeChild(link);
-
+                link.href = dataURL; document.body.appendChild(link); link.click(); document.body.removeChild(link);
                 generateButton.textContent = "GENERATED!";
                 setTimeout(() => {
-                    generateButton.textContent = originalButtonText;
-                    generateButton.disabled = false;
+                    generateButton.textContent = originalButtonText; generateButton.disabled = false;
                 }, 2000);
             }, 50);
         }
         
-        // Ensure display canvas is redrawn if window resizes significantly
         let resizeTimeout;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
-                if (outputCanvasContainer.offsetParent !== null) { // Check if visible
-                     generatePatternForDisplay();
-                }
+                if (outputCanvasContainer.offsetParent !== null) { generatePatternForDisplay(); }
             }, 250);
         });
 
