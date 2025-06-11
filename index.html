@@ -416,10 +416,10 @@
             const lumaLabel = luminanceControl.querySelector('label');
 
             if (mode === 'edgeDetection') {
-                lumaLabel.firstChild.textContent = 'EDGE SENSITIVITY'; // MODIFIED: Changed label
+                lumaLabel.firstChild.textContent = 'EDGE SENSITIVITY';
                 brightnessThresholdSlider.min = 0;
                 brightnessThresholdSlider.max = 255;
-                brightnessThresholdSlider.value = 128; // A sensible default for sensitivity
+                brightnessThresholdSlider.value = 128;
                 colorMatchControl.classList.add('hidden');
                 luminanceControl.classList.remove('hidden');
             } else {
@@ -427,7 +427,7 @@
                     lumaLabel.firstChild.textContent = 'RELATIVE SENSITIVITY';
                     brightnessThresholdSlider.min = -100;
                     brightnessThresholdSlider.max = 100;
-                    brightnessThresholdSlider.value = 50; // Set new default
+                    brightnessThresholdSlider.value = 50;
                     colorMatchControl.classList.add('hidden');
                     luminanceControl.classList.remove('hidden');
                 } else { // colorMatch
@@ -612,16 +612,21 @@
                         case 'luminance': {
                             const brightness = 0.299 * data[pixelIndex] + 0.587 * data[pixelIndex + 1] + 0.114 * data[pixelIndex + 2];
                             const relativeSensitivity = parseInt(brightnessThresholdSlider.value);
-                            // MODIFIED: Flipped the sensitivity logic
-                            let threshold = imageAverageBrightness * (1 - (relativeSensitivity / 100.0));
+                            
+                            let threshold;
+                            if (relativeSensitivity >= 0) {
+                                threshold = imageAverageBrightness + (255 - imageAverageBrightness) * (relativeSensitivity / 100.0);
+                            } else {
+                                threshold = imageAverageBrightness + imageAverageBrightness * (relativeSensitivity / 100.0);
+                            }
                             threshold = Math.max(0, Math.min(255, threshold));
                             
-                            conditionMet = invert ? (brightness < threshold) : (brightness > threshold);
+                            conditionMet = invert ? (brightness > threshold) : (brightness < threshold);
                             if (conditionMet) {
                                 if (invert) {
-                                    strengthFactor = (threshold - brightness) / threshold;
-                                } else {
                                     strengthFactor = (brightness - threshold) / (255.0 - threshold);
+                                } else {
+                                    strengthFactor = (threshold - brightness) / threshold;
                                 }
                             }
                             break;
@@ -645,15 +650,14 @@
                         }
                         case 'edgeDetection': {
                              const edgeMagnitude = edgeData[sampleY * offscreenImageCanvas.width + sampleX];
-                             // MODIFIED: Flipped the threshold logic to match sensitivity
                              const edgeSensitivity = parseInt(brightnessThresholdSlider.value);
-                             const edgeThreshold = 255 - edgeSensitivity;
+                             const edgeThreshold = 255 - edgeSensitivity; 
                              conditionMet = invert ? (edgeMagnitude < edgeThreshold) : (edgeMagnitude > edgeThreshold);
                              if(conditionMet) {
                                 if (invert) {
                                     strengthFactor = (edgeThreshold - edgeMagnitude) / edgeThreshold;
                                 } else {
-                                    strengthFactor = (edgeMagnitude - edgeThreshold) / (255 - edgeThreshold); // Use 255 as a practical max magnitude for scaling
+                                    strengthFactor = (edgeMagnitude - edgeThreshold) / (255 - edgeThreshold);
                                 }
                              }
                              break;
@@ -678,7 +682,6 @@
             if (isCircle) {
                 ctx.arc(x, y, size / 2, 0, Math.PI * 2);
             } else {
-                // MODIFIED: Changed square size calculation
                 const side = size * 0.85;
                 ctx.rect(x - side / 2, y - side / 2, side, side);
             }
