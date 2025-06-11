@@ -614,19 +614,22 @@
                             const relativeSensitivity = parseInt(brightnessThresholdSlider.value);
                             
                             let threshold;
+                            // MODIFIED: Corrected sensitivity logic
                             if (relativeSensitivity >= 0) {
-                                threshold = imageAverageBrightness - imageAverageBrightness * (relativeSensitivity / 100.0);
+                                const sensitivityPercent = relativeSensitivity / 100.0;
+                                threshold = imageAverageBrightness + (255 - imageAverageBrightness) * sensitivityPercent;
                             } else {
-                                threshold = imageAverageBrightness + (255 - imageAverageBrightness) * (-relativeSensitivity / 100.0);
+                                const sensitivityPercent = relativeSensitivity / 100.0; // e.g. -0.5
+                                threshold = imageAverageBrightness + imageAverageBrightness * sensitivityPercent;
                             }
                             threshold = Math.max(0, Math.min(255, threshold));
                             
-                            conditionMet = invert ? (brightness > threshold) : (brightness < threshold);
+                            conditionMet = invert ? (brightness < threshold) : (brightness > threshold);
                             if (conditionMet) {
                                 if (invert) {
-                                    strengthFactor = (brightness - threshold) / (255.0 - threshold);
-                                } else {
                                     strengthFactor = (threshold - brightness) / threshold;
+                                } else {
+                                    strengthFactor = (brightness - threshold) / (255.0 - threshold);
                                 }
                             }
                             break;
@@ -651,6 +654,7 @@
                         case 'edgeDetection': {
                              const edgeMagnitude = edgeData[sampleY * offscreenImageCanvas.width + sampleX];
                              const edgeSensitivity = parseInt(brightnessThresholdSlider.value);
+                             // MODIFIED: Inverted logic for sensitivity
                              const edgeThreshold = 255 - edgeSensitivity; 
                              conditionMet = invert ? (edgeMagnitude < edgeThreshold) : (edgeMagnitude > edgeThreshold);
                              if(conditionMet) {
@@ -682,7 +686,8 @@
             if (isCircle) {
                 ctx.arc(x, y, size / 2, 0, Math.PI * 2);
             } else {
-                const side = size * 0.85;
+                // MODIFIED: Changed square size back to 0.8
+                const side = size * 0.8;
                 ctx.rect(x - side / 2, y - side / 2, side, side);
             }
             ctx.fill();
