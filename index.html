@@ -154,8 +154,8 @@
             <div class="lg:w-[320px] lg:flex-none space-y-6">
                 <div class="grid grid-cols-1 gap-y-5">
                      <div class="control-group">
-                        <label for="patternDensitySlider" class="control-label">SHAPE DENSITY <span id="patternDensityValue" class="slider-value-label">(140)</span></label>
-                        <input type="range" id="patternDensitySlider" min="10" max="200" value="140" class="slider w-full">
+                        <label for="patternDensitySlider" class="control-label">SHAPE DENSITY <span id="patternDensityValue" class="slider-value-label">(170)</span></label>
+                        <input type="range" id="patternDensitySlider" min="10" max="200" value="170" class="slider w-full">
                     </div>
                     <div class="control-group">
                         <label for="randomnessSlider" class="control-label">SHAPE MIX <span id="randomnessValue" class="slider-value-label">(0.50)</span></label>
@@ -175,8 +175,8 @@
                     </div>
 
                     <div id="luminanceControl" class="control-group">
-                        <label for="brightnessThresholdSlider" class="control-label">RELATIVE SENSITIVITY <span id="brightnessThresholdValue" class="slider-value-label">(50%)</span></label>
-                        <input type="range" id="brightnessThresholdSlider" min="-100" max="100" value="50" step="1" class="slider w-full">
+                        <label for="brightnessThresholdSlider" class="control-label">RELATIVE SENSITIVITY <span id="brightnessThresholdValue" class="slider-value-label">(100%)</span></label>
+                        <input type="range" id="brightnessThresholdSlider" min="-100" max="200" value="100" step="1" class="slider w-full">
                     </div>
                     
                     <div id="colorMatchControl" class="control-group hidden">
@@ -426,8 +426,8 @@
                  if(mode === 'luminance') {
                     lumaLabel.firstChild.textContent = 'RELATIVE SENSITIVITY';
                     brightnessThresholdSlider.min = -100;
-                    brightnessThresholdSlider.max = 100;
-                    brightnessThresholdSlider.value = 50;
+                    brightnessThresholdSlider.max = 200;
+                    brightnessThresholdSlider.value = 100;
                     colorMatchControl.classList.add('hidden');
                     luminanceControl.classList.remove('hidden');
                 } else { // colorMatch
@@ -615,9 +615,9 @@
                             
                             let threshold;
                             if (relativeSensitivity >= 0) {
-                                threshold = imageAverageBrightness + (255 - imageAverageBrightness) * (relativeSensitivity / 100.0);
+                                threshold = imageAverageBrightness - imageAverageBrightness * (relativeSensitivity / 100.0);
                             } else {
-                                threshold = imageAverageBrightness + imageAverageBrightness * (relativeSensitivity / 100.0);
+                                threshold = imageAverageBrightness + (255 - imageAverageBrightness) * (-relativeSensitivity / 100.0);
                             }
                             threshold = Math.max(0, Math.min(255, threshold));
                             
