@@ -298,7 +298,7 @@
         let offscreenImageCanvas = document.createElement('canvas');
         let offscreenImageCtx = offscreenImageCanvas.getContext('2d', { willReadFrequently: true });
         offscreenImageCtx.imageSmoothingEnabled = false;
-        let imageAverageBrightness = 128;
+        let imageMedianBrightness = 128; // Changed from average to median
 
         // --- Initialization ---
         function initialize() {
@@ -399,7 +399,7 @@
                     offscreenImageCanvas.height = originalImage.height;
                     offscreenImageCtx.drawImage(originalImage, 0, 0);
                     
-                    analyzeImageBrightness(); 
+                    analyzeImageAndSetMedian(); 
                     
                     updatePreviewPanes(e.target.result);
                     generatePatternForDisplay();
@@ -508,19 +508,20 @@
 
         // --- Core Drawing Logic ---
         
-        function analyzeImageBrightness() {
+        function analyzeImageAndSetMedian() {
             if (!originalImage) {
-                imageAverageBrightness = 128;
+                imageMedianBrightness = 128;
                 return;
             }
             const imageData = offscreenImageCtx.getImageData(0, 0, offscreenImageCanvas.width, offscreenImageCanvas.height);
             const data = imageData.data;
-            let totalLuma = 0;
-            const numPixels = data.length / 4;
+            const lumaValues = [];
             for (let i = 0; i < data.length; i += 4) {
-                totalLuma += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                lumaValues.push(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
             }
-            imageAverageBrightness = totalLuma / numPixels;
+            lumaValues.sort((a, b) => a - b);
+            const mid = Math.floor(lumaValues.length / 2);
+            imageMedianBrightness = lumaValues.length % 2 !== 0 ? lumaValues[mid] : (lumaValues[mid - 1] + lumaValues[mid]) / 2;
         }
 
         function generatePatternForDisplay() {
@@ -613,21 +614,13 @@
                             const relativeSensitivity = parseInt(brightnessThresholdSlider.value);
                             const sensitivityMultiplier = 1.0 + (relativeSensitivity / 100.0);
                             
-                            let baseStrength;
-                            if (invert) {
-                                baseStrength = brightness / 255.0; // 0 for black, 1 for white
-                            } else {
-                                baseStrength = (255.0 - brightness) / 255.0; // 1 for black, 0 for white
-                            }
-
-                            // The threshold now defines the *mid-point* of sensitivity
-                            const threshold = imageAverageBrightness / 255.0;
+                            let baseStrength = invert ? (brightness / 255.0) : ((255.0 - brightness) / 255.0);
                             
-                            // Adjust the base strength relative to the image's average brightness
+                            const threshold = invert ? (imageMedianBrightness / 255.0) : ((255.0 - imageMedianBrightness) / 255.0);
+
                             if (baseStrength > threshold) {
                                 strengthFactor = ((baseStrength - threshold) / (1.0 - threshold)) * sensitivityMultiplier;
                             }
-                            
                             break;
                         }
                         case 'colorMatch': {
