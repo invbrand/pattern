@@ -169,15 +169,15 @@
                             <option value="edgeDetection">Edge Detection</option>
                         </select>
                     </div>
-                    <!-- MODIFIED: Moved Invert toggle here for better grouping -->
                      <div class="control-group flex items-center justify-between">
                         <label for="invertToggle" class="control-label !mb-0">INVERT ANALYSIS</label>
                         <input type="checkbox" id="invertToggle" class="h-4 w-4 text-black border-gray-400 rounded focus:ring-black" style="accent-color: #000000;" />
                     </div>
 
+                    <!-- MODIFIED: Changed label and range for the sensitivity slider -->
                     <div id="luminanceControl" class="control-group">
-                        <label for="brightnessThresholdSlider" class="control-label">LUMA SENSITIVITY <span id="brightnessThresholdValue" class="slider-value-label">(95)</span></label>
-                        <input type="range" id="brightnessThresholdSlider" min="0" max="255" value="95" class="slider w-full">
+                        <label for="brightnessThresholdSlider" class="control-label">RELATIVE SENSITIVITY <span id="brightnessThresholdValue" class="slider-value-label">(0%)</span></label>
+                        <input type="range" id="brightnessThresholdSlider" min="-100" max="100" value="0" step="1" class="slider w-full">
                     </div>
                     
                     <div id="colorMatchControl" class="control-group hidden">
@@ -194,6 +194,7 @@
                     </div>
                     <div class="control-group">
                         <label for="maxShapeScaleSlider" class="control-label">MAX SHAPE SIZE <span id="maxShapeScaleValue" class="slider-value-label">(0.85)</span></label>
+                        <!-- MODIFIED: Changed the default value to 0.85 -->
                         <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.85" step="0.01" class="slider w-full">
                     </div>
                 </div>
@@ -221,7 +222,6 @@
             </div>
 
             <!-- Previews Column -->
-            <!-- MODIFIED: Changed layout to flex-col for stacking -->
             <div class="flex-1 flex flex-col gap-4">
                  <div class="flex flex-col items-center">
                     <p class="text-xs text-gray-500 uppercase mb-2">Original Image</p>
@@ -299,6 +299,7 @@
         let imageAspectRatio = 1;
         let offscreenImageCanvas = document.createElement('canvas');
         let offscreenImageCtx = offscreenImageCanvas.getContext('2d', { willReadFrequently: true });
+        let imageAverageBrightness = 128; // NEW: Variable to store the image's average brightness
 
         // --- Initialization ---
         function initialize() {
@@ -399,6 +400,8 @@
                     offscreenImageCanvas.height = originalImage.height;
                     offscreenImageCtx.drawImage(originalImage, 0, 0);
                     
+                    analyzeImageBrightness(); // NEW: Analyze image brightness on load
+                    
                     updatePreviewPanes(e.target.result);
                     generatePatternForDisplay();
                 };
@@ -411,10 +414,10 @@
         
         function handleAnalysisModeChange() {
             const mode = analysisModeSelect.value;
-            luminanceControl.classList.toggle('hidden', mode !== 'luminance' && mode !== 'edgeDetection');
-            colorMatchControl.classList.toggle('hidden', mode !== 'colorMatch');
+            luminanceControl.classList.toggle('hidden', mode !== 'luminance');
+            colorMatchControl.classList.toggle('hidden', mode === 'luminance'); // Hide for luma, show for others
             const lumaLabel = luminanceControl.querySelector('label');
-            lumaLabel.firstChild.textContent = mode === 'edgeDetection' ? 'EDGE THRESHOLD ' : 'LUMA SENSITIVITY ';
+            lumaLabel.firstChild.textContent = mode === 'edgeDetection' ? 'EDGE THRESHOLD ' : 'RELATIVE SENSITIVITY ';
             generatePatternForDisplay();
         }
 
@@ -437,11 +440,15 @@
             link.click();
         }
 
-        // --- UI Updates ---
+        // --- UI Updates & Logic ---
         function updateSliderValueDisplays() {
             patternDensityValueDisplay.textContent = `(${patternDensitySlider.value})`;
             randomnessValueDisplay.textContent = `(${parseFloat(randomnessSlider.value).toFixed(2)})`;
-            brightnessThresholdValueDisplay.textContent = `(${brightnessThresholdSlider.value})`;
+            
+            // MODIFIED: Show percentage for relative sensitivity
+            const brightnessValue = parseInt(brightnessThresholdSlider.value);
+            brightnessThresholdValueDisplay.textContent = `(${brightnessValue > 0 ? '+' : ''}${brightnessValue}%)`;
+            
             minShapeScaleValueDisplay.textContent = `(${parseFloat(minShapeScaleSlider.value).toFixed(2)})`;
             maxShapeScaleValueDisplay.textContent = `(${parseFloat(maxShapeScaleSlider.value).toFixed(2)})`;
             colorMatchThresholdValue.textContent = `(${colorMatchThresholdSlider.value})`;
@@ -468,7 +475,7 @@
             } else {
                  imagePreview.classList.add('hidden');
                  dropZoneContent.classList.remove('hidden');
-                 generatePatternForDisplay(); // Draw placeholder
+                 generatePatternForDisplay();
             }
         }
         
@@ -478,23 +485,34 @@
         }
 
         // --- Core Drawing Logic ---
+        
+        // NEW: Function to analyze the average brightness of the image
+        function analyzeImageBrightness() {
+            if (!originalImage) {
+                imageAverageBrightness = 128; // Default if no image
+                return;
+            }
+            const imageData = offscreenImageCtx.getImageData(0, 0, offscreenImageCanvas.width, offscreenImageCanvas.height);
+            const data = imageData.data;
+            let totalLuma = 0;
+            const numPixels = data.length / 4;
+            for (let i = 0; i < data.length; i += 4) {
+                totalLuma += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+            }
+            imageAverageBrightness = totalLuma / numPixels;
+        }
+
         function generatePatternForDisplay() {
             generatePatternOnCanvas(patternPreviewCanvas, patternPreviewCtx, false);
         }
 
         function generatePatternOnCanvas(canvas, ctx, isForDownload = false, downloadMaxDim = 0) {
-            // Determine canvas dimensions
             let canvasWidth, canvasHeight;
             let currentAspectRatio = originalImage ? imageAspectRatio : 1;
 
             if (isForDownload) {
-                if (currentAspectRatio >= 1) {
-                    canvasWidth = downloadMaxDim;
-                    canvasHeight = downloadMaxDim / currentAspectRatio;
-                } else {
-                    canvasHeight = downloadMaxDim;
-                    canvasWidth = downloadMaxDim * currentAspectRatio;
-                }
+                if (currentAspectRatio >= 1) { canvasWidth = downloadMaxDim; canvasHeight = downloadMaxDim / currentAspectRatio; } 
+                else { canvasHeight = downloadMaxDim; canvasWidth = downloadMaxDim * currentAspectRatio; }
             } else {
                 const containerRect = canvas.parentElement.getBoundingClientRect();
                  if (containerRect.width / containerRect.height > currentAspectRatio) {
@@ -513,7 +531,6 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             if (!originalImage) {
-                 // Draw placeholder text if no image is loaded
                 ctx.fillStyle = "#9ca3af";
                 ctx.font = "14px 'Roboto Mono'";
                 ctx.textAlign = "center";
@@ -522,10 +539,8 @@
                 return;
             }
             
-            // Get settings
             const density = parseInt(patternDensitySlider.value);
             const randomness = parseFloat(randomnessSlider.value);
-            const brightnessThreshold = parseInt(brightnessThresholdSlider.value);
             const minScale = parseFloat(minShapeScaleSlider.value);
             const maxScale = parseFloat(maxShapeScaleSlider.value);
             const invert = invertToggle.checked;
@@ -537,6 +552,11 @@
             
             const imageData = offscreenImageCtx.getImageData(0, 0, offscreenImageCanvas.width, offscreenImageCanvas.height);
             const data = imageData.data;
+            
+            // MODIFIED: Calculate the effective threshold based on relative slider
+            const relativeSensitivity = parseInt(brightnessThresholdSlider.value);
+            let effectiveBrightnessThreshold = imageAverageBrightness * (1 + (relativeSensitivity / 100.0));
+            effectiveBrightnessThreshold = Math.max(0, Math.min(255, effectiveBrightnessThreshold));
             
             let edgeData = null;
             if (analysisMode === 'edgeDetection') {
@@ -574,7 +594,7 @@
                     switch (analysisMode) {
                         case 'luminance':
                             const brightness = 0.299 * data[pixelIndex] + 0.587 * data[pixelIndex + 1] + 0.114 * data[pixelIndex + 2];
-                            conditionMet = invert ? (brightness > brightnessThreshold) : (brightness < brightnessThreshold);
+                            conditionMet = invert ? (brightness > effectiveBrightnessThreshold) : (brightness < effectiveBrightnessThreshold);
                             break;
                         case 'colorMatch':
                             if (targetColor) {
@@ -585,7 +605,9 @@
                             break;
                         case 'edgeDetection':
                              const edgeMagnitude = edgeData[sampleY * offscreenImageCanvas.width + sampleX];
-                             conditionMet = invert ? (edgeMagnitude < brightnessThreshold) : (edgeMagnitude > brightnessThreshold);
+                             // For edge detection, the threshold is still absolute as it refers to edge strength, not image brightness
+                             const edgeThreshold = parseInt(brightnessThresholdSlider.value);
+                             conditionMet = invert ? (edgeMagnitude < edgeThreshold) : (edgeMagnitude > edgeThreshold);
                              break;
                     }
 
