@@ -16,11 +16,11 @@
             border-radius: 0.5rem;
             padding: 2rem;
             margin: 1rem auto;
-            max-width: 1200px; /* Increased max-width for better layout */
+            max-width: 1200px;
         }
         .header-title { color: #000000; font-weight: 600; }
         .header-subtitle { color: #6b7280; font-size: 0.875rem; }
-        .action-button { /* General class for major buttons */
+        .action-button {
             background-color: #1f2937;
             color: white;
             padding: 0.5rem 1.5rem;
@@ -99,11 +99,12 @@
             justify-content: center;
             position: relative;
             overflow: hidden;
-            aspect-ratio: var(--image-aspect-ratio, 1/1); /* Default aspect ratio */
+            aspect-ratio: var(--image-aspect-ratio, 1/1);
             width: 100%;
+            min-height: 300px; /* Ensure a minimum height */
         }
         
-        #imagePreview, #outputCanvas {
+        #imagePreview, #patternPreviewCanvas {
             position: absolute;
             max-width: 100%;
             max-height: 100%;
@@ -153,8 +154,8 @@
             <div class="lg:w-[320px] lg:flex-none space-y-6">
                 <div class="grid grid-cols-1 gap-y-5">
                      <div class="control-group">
-                        <label for="patternDensitySlider" class="control-label">SHAPE DENSITY <span id="patternDensityValue" class="slider-value-label">(70)</span></label>
-                        <input type="range" id="patternDensitySlider" min="10" max="200" value="70" class="slider w-full">
+                        <label for="patternDensitySlider" class="control-label">SHAPE DENSITY <span id="patternDensityValue" class="slider-value-label">(140)</span></label>
+                        <input type="range" id="patternDensitySlider" min="10" max="200" value="140" class="slider w-full">
                     </div>
                     <div class="control-group">
                         <label for="randomnessSlider" class="control-label">SHAPE MIX <span id="randomnessValue" class="slider-value-label">(0.50)</span></label>
@@ -168,19 +169,15 @@
                             <option value="edgeDetection">Edge Detection</option>
                         </select>
                     </div>
+                    <!-- MODIFIED: Moved Invert toggle here for better grouping -->
+                     <div class="control-group flex items-center justify-between">
+                        <label for="invertToggle" class="control-label !mb-0">INVERT ANALYSIS</label>
+                        <input type="checkbox" id="invertToggle" class="h-4 w-4 text-black border-gray-400 rounded focus:ring-black" style="accent-color: #000000;" />
+                    </div>
 
-                    <div class="control-group">
-                        <label for="minShapeScaleSlider" class="control-label">MIN SHAPE SIZE <span id="minShapeScaleValue" class="slider-value-label">(0.20)</span></label>
-                        <input type="range" id="minShapeScaleSlider" min="0.01" max="1.0" value="0.2" step="0.01" class="slider w-full">
-                    </div>
-                    <div class="control-group">
-                        <label for="maxShapeScaleSlider" class="control-label">MAX SHAPE SIZE <span id="maxShapeScaleValue" class="slider-value-label">(0.70)</span></label>
-                        <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.7" step="0.01" class="slider w-full">
-                    </div>
-                   
                     <div id="luminanceControl" class="control-group">
-                        <label for="brightnessThresholdSlider" class="control-label">LUMA SENSITIVITY <span id="brightnessThresholdValue" class="slider-value-label">(120)</span></label>
-                        <input type="range" id="brightnessThresholdSlider" min="0" max="255" value="120" class="slider w-full">
+                        <label for="brightnessThresholdSlider" class="control-label">LUMA SENSITIVITY <span id="brightnessThresholdValue" class="slider-value-label">(95)</span></label>
+                        <input type="range" id="brightnessThresholdSlider" min="0" max="255" value="95" class="slider w-full">
                     </div>
                     
                     <div id="colorMatchControl" class="control-group hidden">
@@ -190,24 +187,27 @@
                             <input type="color" id="colorMatchColorPicker" value="#DCF56B" class="color-match-picker">
                         </div>
                     </div>
+                    <hr/>
+                     <div class="control-group">
+                        <label for="minShapeScaleSlider" class="control-label">MIN SHAPE SIZE <span id="minShapeScaleValue" class="slider-value-label">(0.01)</span></label>
+                        <input type="range" id="minShapeScaleSlider" min="0.01" max="1.0" value="0.01" step="0.01" class="slider w-full">
+                    </div>
+                    <div class="control-group">
+                        <label for="maxShapeScaleSlider" class="control-label">MAX SHAPE SIZE <span id="maxShapeScaleValue" class="slider-value-label">(0.75)</span></label>
+                        <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.75" step="0.01" class="slider w-full">
+                    </div>
                 </div>
 
                 <div class="colors-section pt-2">
                     <span class="group-label font-bold text-xs uppercase">COLORS</span>
-                     <div class="flex items-start justify-between mt-2">
-                        <div class="flex flex-col space-y-3">
-                            <div class="flex items-center">
-                                <span class="color-picker-label w-28 flex-shrink-0">SHAPE</span>
-                                <div id="shapeColorPickerContainer" class="picker-group"></div>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="color-picker-label w-28 flex-shrink-0">BACKGROUND</span>
-                                <div id="bgColorPickerContainer" class="picker-group"></div>
-                            </div>
+                     <div class="flex flex-col space-y-3 mt-2">
+                        <div class="flex items-center">
+                            <span class="color-picker-label w-28 flex-shrink-0">SHAPE</span>
+                            <div id="shapeColorPickerContainer" class="picker-group"></div>
                         </div>
-                        <div class="flex items-center pt-2">
-                            <label for="invertToggle" class="control-label text-xs whitespace-nowrap mr-2">INVERT</label>
-                            <input type="checkbox" id="invertToggle" class="h-4 w-4 text-black border-gray-400 rounded focus:ring-black" style="accent-color: #000000;" />
+                        <div class="flex items-center">
+                            <span class="color-picker-label w-28 flex-shrink-0">BACKGROUND</span>
+                            <div id="bgColorPickerContainer" class="picker-group"></div>
                         </div>
                     </div>
                 </div>
@@ -221,17 +221,23 @@
             </div>
 
             <!-- Previews Column -->
-            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div id="dropZone" class="preview-container cursor-pointer">
-                    <img id="imagePreview" src="#" alt="Upload area" class="hidden"/>
-                    <canvas id="outputCanvas" class="hidden"></canvas>
-                    <div id="dropZoneContent" class="text-center text-gray-400 text-sm p-4">
-                         <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                         <p class="mt-2 font-semibold">CLICK OR DRAG IMAGE HERE</p>
+            <!-- MODIFIED: Changed layout to flex-col for stacking -->
+            <div class="flex-1 flex flex-col gap-4">
+                 <div class="flex flex-col items-center">
+                    <p class="text-xs text-gray-500 uppercase mb-2">Original Image</p>
+                    <div id="dropZone" class="preview-container cursor-pointer">
+                        <img id="imagePreview" src="#" alt="Upload area" class="hidden"/>
+                        <div id="dropZoneContent" class="text-center text-gray-400 text-sm p-4">
+                             <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                             <p class="mt-2 font-semibold">CLICK OR DRAG IMAGE HERE</p>
+                        </div>
                     </div>
                  </div>
-                 <div id="patternPreviewContainer" class="preview-container">
-                    <canvas id="patternPreviewCanvas"></canvas>
+                 <div class="flex flex-col items-center">
+                     <p class="text-xs text-gray-500 uppercase mb-2">Pattern Preview</p>
+                     <div id="patternPreviewContainer" class="preview-container">
+                        <canvas id="patternPreviewCanvas"></canvas>
+                     </div>
                  </div>
             </div>
         </div>
@@ -285,8 +291,6 @@
         const dropZone = document.getElementById('dropZone');
         const dropZoneContent = document.getElementById('dropZoneContent');
         const imagePreview = document.getElementById('imagePreview');
-        const outputCanvas = document.getElementById('outputCanvas');
-        const outputCtx = outputCanvas.getContext('2d');
         const patternPreviewCanvas = document.getElementById('patternPreviewCanvas');
         const patternPreviewCtx = patternPreviewCanvas.getContext('2d');
         const generateButton = document.getElementById('generateButton');
@@ -461,10 +465,10 @@
                 imagePreview.src = imageSrc;
                 imagePreview.classList.remove('hidden');
                 dropZoneContent.classList.add('hidden');
-                outputCanvas.classList.add('hidden'); // Initially hide canvas to show original
             } else {
                  imagePreview.classList.add('hidden');
                  dropZoneContent.classList.remove('hidden');
+                 generatePatternForDisplay(); // Draw placeholder
             }
         }
         
@@ -475,36 +479,49 @@
 
         // --- Core Drawing Logic ---
         function generatePatternForDisplay() {
-            if (!originalImage) return; // Don't draw if no image
             generatePatternOnCanvas(patternPreviewCanvas, patternPreviewCtx, false);
         }
 
         function generatePatternOnCanvas(canvas, ctx, isForDownload = false, downloadMaxDim = 0) {
-            if (!originalImage && !isForDownload) return;
-
             // Determine canvas dimensions
             let canvasWidth, canvasHeight;
+            let currentAspectRatio = originalImage ? imageAspectRatio : 1;
+
             if (isForDownload) {
-                if (imageAspectRatio >= 1) {
+                if (currentAspectRatio >= 1) {
                     canvasWidth = downloadMaxDim;
-                    canvasHeight = downloadMaxDim / imageAspectRatio;
+                    canvasHeight = downloadMaxDim / currentAspectRatio;
                 } else {
                     canvasHeight = downloadMaxDim;
-                    canvasWidth = downloadMaxDim * imageAspectRatio;
+                    canvasWidth = downloadMaxDim * currentAspectRatio;
                 }
             } else {
                 const containerRect = canvas.parentElement.getBoundingClientRect();
-                 if (containerRect.width / containerRect.height > imageAspectRatio) {
+                 if (containerRect.width / containerRect.height > currentAspectRatio) {
                     canvasHeight = containerRect.height;
-                    canvasWidth = canvasHeight * imageAspectRatio;
+                    canvasWidth = canvasHeight * currentAspectRatio;
                 } else {
                     canvasWidth = containerRect.width;
-                    canvasHeight = canvasWidth / imageAspectRatio;
+                    canvasHeight = canvasWidth / currentAspectRatio;
                 }
             }
             canvas.width = Math.round(canvasWidth);
             canvas.height = Math.round(canvasHeight);
 
+            const bgColor = getSelectedRadioValue('backgroundColor');
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (!originalImage) {
+                 // Draw placeholder text if no image is loaded
+                ctx.fillStyle = "#9ca3af";
+                ctx.font = "14px 'Roboto Mono'";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("Pattern Preview", canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
             // Get settings
             const density = parseInt(patternDensitySlider.value);
             const randomness = parseFloat(randomnessSlider.value);
@@ -515,25 +532,16 @@
             const analysisMode = analysisModeSelect.value;
             const colorMatchThreshold = parseInt(colorMatchThresholdSlider.value);
             const targetColor = hexToRgb(colorMatchColorPicker.value);
-
-            const bgColor = getSelectedRadioValue('backgroundColor');
             const shapeColor = getSelectedRadioValue('shapeColor');
-
-            // Draw background
-            ctx.fillStyle = bgColor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = shapeColor;
             
-            // Prepare image data
             const imageData = offscreenImageCtx.getImageData(0, 0, offscreenImageCanvas.width, offscreenImageCanvas.height);
             const data = imageData.data;
             
-            // Pre-calculate edge data if needed
             let edgeData = null;
             if (analysisMode === 'edgeDetection') {
                 edgeData = new Uint8ClampedArray(offscreenImageCanvas.width * offscreenImageCanvas.height);
-                // Sobel operator logic... (same as video)
-                 for (let y = 1; y < offscreenImageCanvas.height - 1; y++) {
+                for (let y = 1; y < offscreenImageCanvas.height - 1; y++) {
                     for (let x = 1; x < offscreenImageCanvas.width - 1; x++) {
                         let Gx = 0, Gy = 0;
                         const sobelX = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]];
@@ -551,9 +559,8 @@
                 }
             }
 
-            // Draw pattern
             const gridCols = density;
-            const gridRows = Math.round(density / imageAspectRatio);
+            const gridRows = Math.round(density / currentAspectRatio);
             const cellWidth = canvas.width / gridCols;
             const cellHeight = canvas.height / gridRows;
 
