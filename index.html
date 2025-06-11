@@ -605,27 +605,16 @@
                     const sampleY = Math.floor((row + 0.5) / gridRows * offscreenImageCanvas.height);
                     const pixelIndex = (sampleY * offscreenImageCanvas.width + sampleX) * 4;
                     
-                    let conditionMet = false;
                     let strengthFactor = 0;
 
                     switch (analysisMode) {
                         case 'luminance': {
                             const brightness = 0.299 * data[pixelIndex] + 0.587 * data[pixelIndex + 1] + 0.114 * data[pixelIndex + 2];
                             const relativeSensitivity = parseInt(brightnessThresholdSlider.value);
+                            const sensitivityMultiplier = 1.0 + (relativeSensitivity / 100.0);
                             
-                            // MODIFIED: Corrected and simplified sensitivity logic based on user feedback
-                            let threshold = imageAverageBrightness;
-                            
-                            conditionMet = invert ? (brightness > threshold) : (brightness < threshold);
-                            if (conditionMet) {
-                                let rawStrength;
-                                if (invert) {
-                                    rawStrength = (brightness - threshold) / (255.0 - threshold);
-                                } else {
-                                    rawStrength = (threshold - brightness) / threshold;
-                                }
-                                strengthFactor = rawStrength * (relativeSensitivity / 100.0);
-                            }
+                            const baseStrength = invert ? (brightness / 255.0) : ((255.0 - brightness) / 255.0);
+                            strengthFactor = baseStrength * sensitivityMultiplier;
                             break;
                         }
                         case 'colorMatch': {
@@ -633,8 +622,7 @@
                             if (targetColor) {
                                 const r = data[pixelIndex], g = data[pixelIndex+1], b = data[pixelIndex+2];
                                 const distance = Math.sqrt(Math.pow(r - targetColor.r, 2) + Math.pow(g - targetColor.g, 2) + Math.pow(b - targetColor.b, 2));
-                                conditionMet = invert ? (distance > colorMatchThreshold) : (distance < colorMatchThreshold);
-                                if(conditionMet) {
+                                if (invert ? (distance > colorMatchThreshold) : (distance < colorMatchThreshold)) {
                                     const maxPossibleDistance = Math.sqrt(3 * Math.pow(255, 2));
                                     if (invert) {
                                         strengthFactor = (distance - colorMatchThreshold) / (maxPossibleDistance - colorMatchThreshold);
@@ -648,10 +636,8 @@
                         case 'edgeDetection': {
                              const edgeMagnitude = edgeData[sampleY * offscreenImageCanvas.width + sampleX];
                              const edgeSensitivity = parseInt(brightnessThresholdSlider.value);
-                             // MODIFIED: Inverted logic for sensitivity
-                             const edgeThreshold = 255 - edgeSensitivity; 
-                             conditionMet = invert ? (edgeMagnitude < edgeThreshold) : (edgeMagnitude > edgeThreshold);
-                             if(conditionMet) {
+                             const edgeThreshold = 255 - edgeSensitivity;
+                             if(invert ? (edgeMagnitude < edgeThreshold) : (edgeMagnitude > edgeThreshold)) {
                                 if (invert) {
                                     strengthFactor = (edgeThreshold - edgeMagnitude) / edgeThreshold;
                                 } else {
@@ -662,7 +648,7 @@
                         }
                     }
 
-                    if (conditionMet) {
+                    if (strengthFactor > 0) {
                         strengthFactor = Math.max(0, Math.min(1, strengthFactor));
                         const scale = minScale + strengthFactor * (maxScale - minScale);
                         const shapeSize = Math.min(cellWidth, cellHeight) * scale;
