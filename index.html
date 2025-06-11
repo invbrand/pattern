@@ -175,8 +175,8 @@
                     </div>
 
                     <div id="luminanceControl" class="control-group">
-                        <label for="brightnessThresholdSlider" class="control-label">RELATIVE SENSITIVITY <span id="brightnessThresholdValue" class="slider-value-label">(100%)</span></label>
-                        <input type="range" id="brightnessThresholdSlider" min="-100" max="200" value="100" step="1" class="slider w-full">
+                        <label for="brightnessThresholdSlider" class="control-label">RELATIVE SENSITIVITY <span id="brightnessThresholdValue" class="slider-value-label">(0%)</span></label>
+                        <input type="range" id="brightnessThresholdSlider" min="-100" max="200" value="0" step="1" class="slider w-full">
                     </div>
                     
                     <div id="colorMatchControl" class="control-group hidden">
@@ -192,8 +192,8 @@
                         <input type="range" id="minShapeScaleSlider" min="0.01" max="1.0" value="0.01" step="0.01" class="slider w-full">
                     </div>
                     <div class="control-group">
-                        <label for="maxShapeScaleSlider" class="control-label">MAX SHAPE SIZE <span id="maxShapeScaleValue" class="slider-value-label">(0.85)</span></label>
-                        <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.85" step="0.01" class="slider w-full">
+                        <label for="maxShapeScaleSlider" class="control-label">MAX SHAPE SIZE <span id="maxShapeScaleValue" class="slider-value-label">(0.90)</span></label>
+                        <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.90" step="0.01" class="slider w-full">
                     </div>
                 </div>
 
@@ -427,7 +427,7 @@
                     lumaLabel.firstChild.textContent = 'RELATIVE SENSITIVITY';
                     brightnessThresholdSlider.min = -100;
                     brightnessThresholdSlider.max = 200;
-                    brightnessThresholdSlider.value = 100;
+                    brightnessThresholdSlider.value = 0;
                     colorMatchControl.classList.add('hidden');
                     luminanceControl.classList.remove('hidden');
                 } else { // colorMatch
@@ -613,8 +613,21 @@
                             const relativeSensitivity = parseInt(brightnessThresholdSlider.value);
                             const sensitivityMultiplier = 1.0 + (relativeSensitivity / 100.0);
                             
-                            const baseStrength = invert ? (brightness / 255.0) : ((255.0 - brightness) / 255.0);
-                            strengthFactor = baseStrength * sensitivityMultiplier;
+                            let baseStrength;
+                            if (invert) {
+                                baseStrength = brightness / 255.0; // 0 for black, 1 for white
+                            } else {
+                                baseStrength = (255.0 - brightness) / 255.0; // 1 for black, 0 for white
+                            }
+
+                            // The threshold now defines the *mid-point* of sensitivity
+                            const threshold = imageAverageBrightness / 255.0;
+                            
+                            // Adjust the base strength relative to the image's average brightness
+                            if (baseStrength > threshold) {
+                                strengthFactor = ((baseStrength - threshold) / (1.0 - threshold)) * sensitivityMultiplier;
+                            }
+                            
                             break;
                         }
                         case 'colorMatch': {
@@ -636,14 +649,10 @@
                         case 'edgeDetection': {
                              const edgeMagnitude = edgeData[sampleY * offscreenImageCanvas.width + sampleX];
                              const edgeSensitivity = parseInt(brightnessThresholdSlider.value);
-                             const edgeThreshold = 255 - edgeSensitivity;
-                             if(invert ? (edgeMagnitude < edgeThreshold) : (edgeMagnitude > edgeThreshold)) {
-                                if (invert) {
-                                    strengthFactor = (edgeThreshold - edgeMagnitude) / edgeThreshold;
-                                } else {
-                                    strengthFactor = (edgeMagnitude - edgeThreshold) / (255 - edgeThreshold);
-                                }
+                             if (edgeMagnitude > (255 - edgeSensitivity)) {
+                                 strengthFactor = edgeMagnitude / 255.0;
                              }
+                             if(invert) strengthFactor = 1.0 - strengthFactor;
                              break;
                         }
                     }
@@ -666,7 +675,7 @@
             if (isCircle) {
                 ctx.arc(x, y, size / 2, 0, Math.PI * 2);
             } else {
-                const side = size * 0.8;
+                const side = size * 0.75;
                 ctx.rect(x - side / 2, y - side / 2, side, side);
             }
             ctx.fill();
