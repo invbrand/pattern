@@ -297,6 +297,8 @@
         let imageAspectRatio = 1;
         let offscreenImageCanvas = document.createElement('canvas');
         let offscreenImageCtx = offscreenImageCanvas.getContext('2d', { willReadFrequently: true });
+        // MODIFIED: Disable image smoothing to prevent edge artifacts
+        offscreenImageCtx.imageSmoothingEnabled = false;
         let imageAverageBrightness = 128;
 
         // --- Initialization ---
@@ -412,10 +414,29 @@
         
         function handleAnalysisModeChange() {
             const mode = analysisModeSelect.value;
-            luminanceControl.classList.toggle('hidden', mode !== 'luminance');
-            colorMatchControl.classList.toggle('hidden', mode === 'luminance');
             const lumaLabel = luminanceControl.querySelector('label');
-            lumaLabel.firstChild.textContent = mode === 'edgeDetection' ? 'EDGE THRESHOLD ' : 'RELATIVE SENSITIVITY ';
+
+            if (mode === 'edgeDetection') {
+                lumaLabel.firstChild.textContent = 'EDGE THRESHOLD ';
+                brightnessThresholdSlider.min = 0;
+                brightnessThresholdSlider.max = 255;
+                brightnessThresholdSlider.value = 50; // A sensible default for absolute threshold
+                colorMatchControl.classList.add('hidden');
+                luminanceControl.classList.remove('hidden');
+            } else {
+                 if(mode === 'luminance') {
+                    lumaLabel.firstChild.textContent = 'RELATIVE SENSITIVITY ';
+                    brightnessThresholdSlider.min = -100;
+                    brightnessThresholdSlider.max = 100;
+                    brightnessThresholdSlider.value = 0;
+                    colorMatchControl.classList.add('hidden');
+                    luminanceControl.classList.remove('hidden');
+                } else { // colorMatch
+                    luminanceControl.classList.add('hidden');
+                    colorMatchControl.classList.remove('hidden');
+                }
+            }
+            updateSliderValueDisplays();
             generatePatternForDisplay();
         }
 
@@ -443,8 +464,13 @@
             patternDensityValueDisplay.textContent = `(${patternDensitySlider.value})`;
             randomnessValueDisplay.textContent = `(${parseFloat(randomnessSlider.value).toFixed(2)})`;
             
+            const mode = analysisModeSelect.value;
             const brightnessValue = parseInt(brightnessThresholdSlider.value);
-            brightnessThresholdValueDisplay.textContent = `(${brightnessValue > 0 ? '+' : ''}${brightnessValue}%)`;
+            if (mode === 'luminance') {
+                brightnessThresholdValueDisplay.textContent = `(${brightnessValue > 0 ? '+' : ''}${brightnessValue}%)`;
+            } else { // edgeDetection
+                 brightnessThresholdValueDisplay.textContent = `(${brightnessValue})`;
+            }
             
             minShapeScaleValueDisplay.textContent = `(${parseFloat(minShapeScaleSlider.value).toFixed(2)})`;
             maxShapeScaleValueDisplay.textContent = `(${parseFloat(maxShapeScaleSlider.value).toFixed(2)})`;
@@ -541,17 +567,12 @@
             const maxScale = parseFloat(maxShapeScaleSlider.value);
             const invert = invertToggle.checked;
             const analysisMode = analysisModeSelect.value;
-            const colorMatchThreshold = parseInt(colorMatchThresholdSlider.value);
             const targetColor = hexToRgb(colorMatchColorPicker.value);
             const shapeColor = getSelectedRadioValue('shapeColor');
             ctx.fillStyle = shapeColor;
             
             const imageData = offscreenImageCtx.getImageData(0, 0, offscreenImageCanvas.width, offscreenImageCanvas.height);
             const data = imageData.data;
-            
-            const relativeSensitivity = parseInt(brightnessThresholdSlider.value);
-            let effectiveBrightnessThreshold = imageAverageBrightness * (1 + (relativeSensitivity / 100.0));
-            effectiveBrightnessThreshold = Math.max(0, Math.min(255, effectiveBrightnessThreshold));
             
             let edgeData = null;
             if (analysisMode === 'edgeDetection') {
@@ -584,45 +605,63 @@
                     const sampleX = Math.floor((col + 0.5) / gridCols * offscreenImageCanvas.width);
                     const sampleY = Math.floor((row + 0.5) / gridRows * offscreenImageCanvas.height);
                     const pixelIndex = (sampleY * offscreenImageCanvas.width + sampleX) * 4;
-                    let brightness = 0;
-
+                    
                     let conditionMet = false;
+                    let strengthFactor = 0;
+
                     switch (analysisMode) {
-                        case 'luminance':
-                            brightness = 0.299 * data[pixelIndex] + 0.587 * data[pixelIndex + 1] + 0.114 * data[pixelIndex + 2];
-                            conditionMet = invert ? (brightness > effectiveBrightnessThreshold) : (brightness < effectiveBrightnessThreshold);
+                        case 'luminance': {
+                            const brightness = 0.299 * data[pixelIndex] + 0.587 * data[pixelIndex + 1] + 0.114 * data[pixelIndex + 2];
+                            const relativeSensitivity = parseInt(brightnessThresholdSlider.value);
+                            let threshold = imageAverageBrightness * (1 + (relativeSensitivity / 100.0));
+                            threshold = Math.max(0, Math.min(255, threshold));
+                            
+                            conditionMet = invert ? (brightness > threshold) : (brightness < threshold);
+                            if (conditionMet) {
+                                if (invert) {
+                                    strengthFactor = (brightness - threshold) / (255.0 - threshold);
+                                } else {
+                                    strengthFactor = (threshold - brightness) / threshold;
+                                }
+                            }
                             break;
-                        case 'colorMatch':
+                        }
+                        case 'colorMatch': {
+                            const colorMatchThreshold = parseInt(colorMatchThresholdSlider.value);
                             if (targetColor) {
                                 const r = data[pixelIndex], g = data[pixelIndex+1], b = data[pixelIndex+2];
                                 const distance = Math.sqrt(Math.pow(r - targetColor.r, 2) + Math.pow(g - targetColor.g, 2) + Math.pow(b - targetColor.b, 2));
                                 conditionMet = invert ? (distance > colorMatchThreshold) : (distance < colorMatchThreshold);
+                                if(conditionMet) {
+                                    const maxPossibleDistance = Math.sqrt(3 * Math.pow(255, 2));
+                                    if (invert) {
+                                        strengthFactor = (distance - colorMatchThreshold) / (maxPossibleDistance - colorMatchThreshold);
+                                    } else {
+                                        strengthFactor = (colorMatchThreshold - distance) / colorMatchThreshold;
+                                    }
+                                }
                             }
                             break;
-                        case 'edgeDetection':
+                        }
+                        case 'edgeDetection': {
                              const edgeMagnitude = edgeData[sampleY * offscreenImageCanvas.width + sampleX];
                              const edgeThreshold = parseInt(brightnessThresholdSlider.value);
                              conditionMet = invert ? (edgeMagnitude < edgeThreshold) : (edgeMagnitude > edgeThreshold);
+                             if(conditionMet) {
+                                const maxPracticalEdgeMagnitude = 1000;
+                                if (invert) {
+                                    strengthFactor = (edgeThreshold - edgeMagnitude) / edgeThreshold;
+                                } else {
+                                    strengthFactor = (edgeMagnitude - edgeThreshold) / (maxPracticalEdgeMagnitude - edgeThreshold);
+                                }
+                             }
                              break;
+                        }
                     }
 
                     if (conditionMet) {
-                        let scale;
-                        // MODIFIED: Use deterministic scaling for luminance mode
-                        if (analysisMode === 'luminance') {
-                            let strengthFactor = 0;
-                            if (invert) {
-                                strengthFactor = (brightness - effectiveBrightnessThreshold) / (255.0 - effectiveBrightnessThreshold);
-                            } else {
-                                strengthFactor = (effectiveBrightnessThreshold - brightness) / effectiveBrightnessThreshold;
-                            }
-                            strengthFactor = Math.max(0, Math.min(1, strengthFactor));
-                            scale = minScale + strengthFactor * (maxScale - minScale);
-                        } else {
-                            // Keep random scaling for other modes
-                            scale = minScale + Math.random() * (maxScale - minScale);
-                        }
-                        
+                        strengthFactor = Math.max(0, Math.min(1, strengthFactor));
+                        const scale = minScale + strengthFactor * (maxScale - minScale);
                         const shapeSize = Math.min(cellWidth, cellHeight) * scale;
                         const centerX = (col + 0.5) * cellWidth;
                         const centerY = (row + 0.5) * cellHeight;
