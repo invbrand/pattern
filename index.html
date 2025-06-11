@@ -613,24 +613,18 @@
                             const brightness = 0.299 * data[pixelIndex] + 0.587 * data[pixelIndex + 1] + 0.114 * data[pixelIndex + 2];
                             const relativeSensitivity = parseInt(brightnessThresholdSlider.value);
                             
-                            let threshold;
-                            // MODIFIED: Corrected sensitivity logic
-                            if (relativeSensitivity >= 0) {
-                                const sensitivityPercent = relativeSensitivity / 100.0;
-                                threshold = imageAverageBrightness + (255 - imageAverageBrightness) * sensitivityPercent;
-                            } else {
-                                const sensitivityPercent = relativeSensitivity / 100.0; // e.g. -0.5
-                                threshold = imageAverageBrightness + imageAverageBrightness * sensitivityPercent;
-                            }
-                            threshold = Math.max(0, Math.min(255, threshold));
+                            // MODIFIED: Corrected and simplified sensitivity logic based on user feedback
+                            let threshold = imageAverageBrightness;
                             
-                            conditionMet = invert ? (brightness < threshold) : (brightness > threshold);
+                            conditionMet = invert ? (brightness > threshold) : (brightness < threshold);
                             if (conditionMet) {
+                                let rawStrength;
                                 if (invert) {
-                                    strengthFactor = (threshold - brightness) / threshold;
+                                    rawStrength = (brightness - threshold) / (255.0 - threshold);
                                 } else {
-                                    strengthFactor = (brightness - threshold) / (255.0 - threshold);
+                                    rawStrength = (threshold - brightness) / threshold;
                                 }
+                                strengthFactor = rawStrength * (relativeSensitivity / 100.0);
                             }
                             break;
                         }
@@ -686,7 +680,6 @@
             if (isCircle) {
                 ctx.arc(x, y, size / 2, 0, Math.PI * 2);
             } else {
-                // MODIFIED: Changed square size back to 0.8
                 const side = size * 0.8;
                 ctx.rect(x - side / 2, y - side / 2, side, side);
             }
