@@ -174,7 +174,6 @@
                         <input type="checkbox" id="invertToggle" class="h-4 w-4 text-black border-gray-400 rounded focus:ring-black" style="accent-color: #000000;" />
                     </div>
 
-                    <!-- MODIFIED: Changed label and range for the sensitivity slider -->
                     <div id="luminanceControl" class="control-group">
                         <label for="brightnessThresholdSlider" class="control-label">RELATIVE SENSITIVITY <span id="brightnessThresholdValue" class="slider-value-label">(0%)</span></label>
                         <input type="range" id="brightnessThresholdSlider" min="-100" max="100" value="0" step="1" class="slider w-full">
@@ -194,7 +193,6 @@
                     </div>
                     <div class="control-group">
                         <label for="maxShapeScaleSlider" class="control-label">MAX SHAPE SIZE <span id="maxShapeScaleValue" class="slider-value-label">(0.85)</span></label>
-                        <!-- MODIFIED: Changed the default value to 0.85 -->
                         <input type="range" id="maxShapeScaleSlider" min="0.01" max="1.0" value="0.85" step="0.01" class="slider w-full">
                     </div>
                 </div>
@@ -299,7 +297,7 @@
         let imageAspectRatio = 1;
         let offscreenImageCanvas = document.createElement('canvas');
         let offscreenImageCtx = offscreenImageCanvas.getContext('2d', { willReadFrequently: true });
-        let imageAverageBrightness = 128; // NEW: Variable to store the image's average brightness
+        let imageAverageBrightness = 128;
 
         // --- Initialization ---
         function initialize() {
@@ -400,7 +398,7 @@
                     offscreenImageCanvas.height = originalImage.height;
                     offscreenImageCtx.drawImage(originalImage, 0, 0);
                     
-                    analyzeImageBrightness(); // NEW: Analyze image brightness on load
+                    analyzeImageBrightness(); 
                     
                     updatePreviewPanes(e.target.result);
                     generatePatternForDisplay();
@@ -415,7 +413,7 @@
         function handleAnalysisModeChange() {
             const mode = analysisModeSelect.value;
             luminanceControl.classList.toggle('hidden', mode !== 'luminance');
-            colorMatchControl.classList.toggle('hidden', mode === 'luminance'); // Hide for luma, show for others
+            colorMatchControl.classList.toggle('hidden', mode === 'luminance');
             const lumaLabel = luminanceControl.querySelector('label');
             lumaLabel.firstChild.textContent = mode === 'edgeDetection' ? 'EDGE THRESHOLD ' : 'RELATIVE SENSITIVITY ';
             generatePatternForDisplay();
@@ -445,7 +443,6 @@
             patternDensityValueDisplay.textContent = `(${patternDensitySlider.value})`;
             randomnessValueDisplay.textContent = `(${parseFloat(randomnessSlider.value).toFixed(2)})`;
             
-            // MODIFIED: Show percentage for relative sensitivity
             const brightnessValue = parseInt(brightnessThresholdSlider.value);
             brightnessThresholdValueDisplay.textContent = `(${brightnessValue > 0 ? '+' : ''}${brightnessValue}%)`;
             
@@ -486,10 +483,9 @@
 
         // --- Core Drawing Logic ---
         
-        // NEW: Function to analyze the average brightness of the image
         function analyzeImageBrightness() {
             if (!originalImage) {
-                imageAverageBrightness = 128; // Default if no image
+                imageAverageBrightness = 128;
                 return;
             }
             const imageData = offscreenImageCtx.getImageData(0, 0, offscreenImageCanvas.width, offscreenImageCanvas.height);
@@ -553,7 +549,6 @@
             const imageData = offscreenImageCtx.getImageData(0, 0, offscreenImageCanvas.width, offscreenImageCanvas.height);
             const data = imageData.data;
             
-            // MODIFIED: Calculate the effective threshold based on relative slider
             const relativeSensitivity = parseInt(brightnessThresholdSlider.value);
             let effectiveBrightnessThreshold = imageAverageBrightness * (1 + (relativeSensitivity / 100.0));
             effectiveBrightnessThreshold = Math.max(0, Math.min(255, effectiveBrightnessThreshold));
@@ -589,11 +584,12 @@
                     const sampleX = Math.floor((col + 0.5) / gridCols * offscreenImageCanvas.width);
                     const sampleY = Math.floor((row + 0.5) / gridRows * offscreenImageCanvas.height);
                     const pixelIndex = (sampleY * offscreenImageCanvas.width + sampleX) * 4;
+                    let brightness = 0;
 
                     let conditionMet = false;
                     switch (analysisMode) {
                         case 'luminance':
-                            const brightness = 0.299 * data[pixelIndex] + 0.587 * data[pixelIndex + 1] + 0.114 * data[pixelIndex + 2];
+                            brightness = 0.299 * data[pixelIndex] + 0.587 * data[pixelIndex + 1] + 0.114 * data[pixelIndex + 2];
                             conditionMet = invert ? (brightness > effectiveBrightnessThreshold) : (brightness < effectiveBrightnessThreshold);
                             break;
                         case 'colorMatch':
@@ -605,18 +601,32 @@
                             break;
                         case 'edgeDetection':
                              const edgeMagnitude = edgeData[sampleY * offscreenImageCanvas.width + sampleX];
-                             // For edge detection, the threshold is still absolute as it refers to edge strength, not image brightness
                              const edgeThreshold = parseInt(brightnessThresholdSlider.value);
                              conditionMet = invert ? (edgeMagnitude < edgeThreshold) : (edgeMagnitude > edgeThreshold);
                              break;
                     }
 
                     if (conditionMet) {
-                        const scale = minScale + Math.random() * (maxScale - minScale);
+                        let scale;
+                        // MODIFIED: Use deterministic scaling for luminance mode
+                        if (analysisMode === 'luminance') {
+                            let strengthFactor = 0;
+                            if (invert) {
+                                strengthFactor = (brightness - effectiveBrightnessThreshold) / (255.0 - effectiveBrightnessThreshold);
+                            } else {
+                                strengthFactor = (effectiveBrightnessThreshold - brightness) / effectiveBrightnessThreshold;
+                            }
+                            strengthFactor = Math.max(0, Math.min(1, strengthFactor));
+                            scale = minScale + strengthFactor * (maxScale - minScale);
+                        } else {
+                            // Keep random scaling for other modes
+                            scale = minScale + Math.random() * (maxScale - minScale);
+                        }
+                        
                         const shapeSize = Math.min(cellWidth, cellHeight) * scale;
                         const centerX = (col + 0.5) * cellWidth;
                         const centerY = (row + 0.5) * cellHeight;
-                        const isCircle = Math.random() > randomness;
+                        const isCircle = Math.random() < randomness;
                         drawShape(ctx, centerX, centerY, shapeSize, isCircle);
                     }
                 }
