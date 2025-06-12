@@ -165,10 +165,8 @@
                         <label for="analysisModeSelect" class="control-label">Analysis Mode</label>
                         <select id="analysisModeSelect" class="select-input">
                             <option value="luminance" selected>Luma Sensitivity</option>
-                            <!-- ADDED MODES -->
                             <option value="hslAnalysis">HSL (Colorfulness)</option>
                             <option value="colorDissimilarity">Texture (Color Variation)</option>
-                            <!-- EXISTING MODES -->
                             <option value="colorMatch">Color Match</option>
                             <option value="edgeDetection">Edge Detection</option>
                         </select>
@@ -423,24 +421,47 @@
             // Hide all special controls first
             luminanceControl.classList.add('hidden');
             colorMatchControl.classList.add('hidden');
+            
+            // Default to showing the main sensitivity slider
+            luminanceControl.classList.remove('hidden');
 
-            if (mode === 'luminance' || mode === 'edgeDetection') {
-                luminanceControl.classList.remove('hidden');
-                if (mode === 'edgeDetection') {
-                    lumaLabel.firstChild.textContent = 'EDGE SENSITIVITY';
-                    brightnessThresholdSlider.min = 0;
-                    brightnessThresholdSlider.max = 255;
-                    brightnessThresholdSlider.value = 128;
-                } else { // luminance
+            switch(mode) {
+                case 'luminance':
                     lumaLabel.firstChild.textContent = 'RELATIVE SENSITIVITY';
                     brightnessThresholdSlider.min = -100;
                     brightnessThresholdSlider.max = 200;
+                    brightnessThresholdSlider.step = 1;
                     brightnessThresholdSlider.value = 80;
-                }
-            } else if (mode === 'colorMatch') {
-                colorMatchControl.classList.remove('hidden');
+                    break;
+                case 'hslAnalysis':
+                    lumaLabel.firstChild.textContent = 'SATURATION BIAS';
+                    brightnessThresholdSlider.min = 0;
+                    brightnessThresholdSlider.max = 1;
+                    brightnessThresholdSlider.step = 0.01;
+                    brightnessThresholdSlider.value = 0.7;
+                    break;
+                case 'colorDissimilarity':
+                    lumaLabel.firstChild.textContent = 'TEXTURE SENSITIVITY';
+                    brightnessThresholdSlider.min = 0.1;
+                    brightnessThresholdSlider.max = 3;
+                    brightnessThresholdSlider.step = 0.1;
+                    brightnessThresholdSlider.value = 1;
+                    break;
+                case 'edgeDetection':
+                    lumaLabel.firstChild.textContent = 'EDGE SENSITIVITY';
+                    brightnessThresholdSlider.min = 0;
+                    brightnessThresholdSlider.max = 255;
+                    brightnessThresholdSlider.step = 1;
+                    brightnessThresholdSlider.value = 128;
+                    break;
+                case 'colorMatch':
+                    luminanceControl.classList.add('hidden');
+                    colorMatchControl.classList.remove('hidden');
+                    break;
+                default:
+                     luminanceControl.classList.add('hidden');
+                     break;
             }
-            // HSL and Texture modes don't need the extra controls, so they remain hidden.
 
             updateSliderValueDisplays();
             generatePatternForDisplay();
@@ -471,11 +492,21 @@
             randomnessValueDisplay.textContent = `(${parseFloat(randomnessSlider.value).toFixed(2)})`;
             
             const mode = analysisModeSelect.value;
-            const brightnessValue = parseInt(brightnessThresholdSlider.value);
-            if (mode === 'luminance') {
-                brightnessThresholdValueDisplay.textContent = `(${brightnessValue > 0 ? '+' : ''}${brightnessValue}%)`;
-            } else { // edgeDetection
-                 brightnessThresholdValueDisplay.textContent = `(${brightnessValue})`;
+            const sensitivityValue = parseFloat(brightnessThresholdSlider.value);
+
+            switch(mode) {
+                case 'luminance':
+                    brightnessThresholdValueDisplay.textContent = `(${sensitivityValue > 0 ? '+' : ''}${sensitivityValue}%)`;
+                    break;
+                case 'hslAnalysis':
+                     brightnessThresholdValueDisplay.textContent = `(${Math.round(sensitivityValue * 100)}%)`;
+                     break;
+                case 'colorDissimilarity':
+                     brightnessThresholdValueDisplay.textContent = `(x${sensitivityValue.toFixed(1)})`;
+                     break;
+                case 'edgeDetection':
+                     brightnessThresholdValueDisplay.textContent = `(${Math.round(sensitivityValue)})`;
+                     break;
             }
             
             minShapeScaleValueDisplay.textContent = `(${parseFloat(minShapeScaleSlider.value).toFixed(2)})`;
@@ -677,11 +708,12 @@
             const maxScale = parseFloat(maxShapeScaleSlider.value);
             const invert = invertToggle.checked;
             const analysisMode = analysisModeSelect.value;
+            const sensitivity = parseFloat(brightnessThresholdSlider.value);
             const targetColor = analysisMode === 'colorMatch' ? hexToRgb(colorMatchColorPicker.value) : null;
             const shapeColor = getSelectedRadioValue('shapeColor');
             ctx.fillStyle = shapeColor;
             
-            // --- MODIFIED DATA HANDLING ---
+            // --- DATA HANDLING ---
             const colorCanvas = document.createElement('canvas');
             colorCanvas.width = originalImage.width;
             colorCanvas.height = originalImage.height;
@@ -697,7 +729,7 @@
             }
             
             const data = processedImageData.data;
-            const colorData = originalColorImageData.data; // Keep original colors for HSL/ColorMatch
+            const colorData = originalColorImageData.data;
             
             const gridCols = density;
             const gridRows = Math.round(density / currentAspectRatio);
@@ -715,9 +747,8 @@
 
                     switch (analysisMode) {
                         case 'luminance': {
-                            const brightness = data[pixelIndex]; // Already grayscale from equalization
-                            const relativeSensitivity = parseInt(brightnessThresholdSlider.value);
-                            const sensitivityMultiplier = 1.0 + (relativeSensitivity / 100.0);
+                            const brightness = data[pixelIndex];
+                            const sensitivityMultiplier = 1.0 + (sensitivity / 100.0);
                             const baseStrength = invert ? (brightness / 255.0) : ((255.0 - brightness) / 255.0);
                             
                             if (baseStrength > 0.01) {
@@ -730,10 +761,10 @@
                             const r = colorData[pixelIndex];
                             const g = colorData[pixelIndex + 1];
                             const b = colorData[pixelIndex + 2];
-                            const { s, l } = rgbToHsl(r, g, b); // Saturation and Lightness (0 to 1)
+                            const { s, l } = rgbToHsl(r, g, b);
 
-                            const saturationWeight = 0.7;
-                            const lightnessWeight = 0.3;
+                            const saturationWeight = sensitivity; // Use slider value directly
+                            const lightnessWeight = 1.0 - saturationWeight;
                             
                             strengthFactor = (saturationWeight * s) + (lightnessWeight * (1.0 - l));
                             if (invert) strengthFactor = 1.0 - strengthFactor;
@@ -741,8 +772,9 @@
                             break;
                         }
                         case 'colorDissimilarity': {
-                            const textureStrength = data[pixelIndex] / 255.0; // From dissimilarity map
-                            strengthFactor = invert ? (1.0 - textureStrength) : textureStrength;
+                            const textureStrength = data[pixelIndex] / 255.0;
+                            strengthFactor = textureStrength * sensitivity; // Use slider as multiplier
+                            if (invert) strengthFactor = (1.0 - (data[pixelIndex] / 255.0)) * sensitivity;
                             conditionMet = true;
                             break;
                         }
@@ -753,15 +785,12 @@
                              const distance = calculateColorDistance(r, g, b, targetColor.r, targetColor.g, targetColor.b);
                              const threshold = parseInt(colorMatchThresholdSlider.value);
 
-                             // If 'invert' is checked, we draw when the color is FAR from the target
-                             // If 'invert' is not checked, we draw when the color is CLOSE to the target
                              if ((invert && distance > threshold) || (!invert && distance <= threshold)) {
-                                 strengthFactor = 1.0; // For now, it's all or nothing
+                                 strengthFactor = 1.0;
                                  conditionMet = true;
                              }
                              break;
                         }
-                        // Note: Edge detection logic would need to be added here if fully implemented
                     }
 
                     if (conditionMet && strengthFactor > 0) {
@@ -793,7 +822,11 @@
             return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
         }
 
-        document.addEventListener('DOMContentLoaded', initialize);
+        document.addEventListener('DOMContentLoaded', () => {
+            initialize();
+            // Set initial state correctly
+            handleAnalysisModeChange();
+        });
     </script>
 </body>
 </html>
