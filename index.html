@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BRAND IMAGE PATTERN GENERATOR - V2</title>
+    <title>BRAND IMAGE PATTERN GENERATOR - V3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -165,6 +165,10 @@
                         <label for="analysisModeSelect" class="control-label">Analysis Mode</label>
                         <select id="analysisModeSelect" class="select-input">
                             <option value="luminance" selected>Luma Sensitivity</option>
+                            <!-- ADDED MODES -->
+                            <option value="hslAnalysis">HSL (Colorfulness)</option>
+                            <option value="colorDissimilarity">Texture (Color Variation)</option>
+                            <!-- EXISTING MODES -->
                             <option value="colorMatch">Color Match</option>
                             <option value="edgeDetection">Edge Detection</option>
                         </select>
@@ -242,6 +246,7 @@
     </div>
 
     <script>
+        // --- CONFIGURATION ---
         const BRAND_COLORS_CONFIG = [
             { name: "White", hex: "#FFFFFF" }, { name: "Black", hex: "#0F0F0F" },
             { name: "Midnight Blue", hex: "#24248E" }, { name: "Optimist Blue", hex: "#0C76FE" },
@@ -260,7 +265,7 @@
             { name: "4K", value: 3840 }, { name: "8K", value: 7680 }
         ];
 
-        // DOM Elements
+        // --- DOM Elements ---
         const patternDensitySlider = document.getElementById('patternDensitySlider');
         const patternDensityValueDisplay = document.getElementById('patternDensityValue');
         const randomnessSlider = document.getElementById('randomnessSlider');
@@ -295,6 +300,7 @@
         
         let originalImage = null;
         let imageAspectRatio = 1;
+        // Canvas for grayscale/equalized image processing
         let offscreenImageCanvas = document.createElement('canvas');
         let offscreenImageCtx = offscreenImageCanvas.getContext('2d', { willReadFrequently: true });
         offscreenImageCtx.imageSmoothingEnabled = false;
@@ -397,7 +403,7 @@
                     offscreenImageCanvas.width = originalImage.width;
                     offscreenImageCanvas.height = originalImage.height;
                     
-                    // Apply histogram equalization to a new canvas for processing
+                    // Apply histogram equalization for luminance mode
                     equalizeHistogram();
 
                     updatePreviewPanes(e.target.result);
@@ -413,27 +419,29 @@
         function handleAnalysisModeChange() {
             const mode = analysisModeSelect.value;
             const lumaLabel = luminanceControl.querySelector('label');
+            
+            // Hide all special controls first
+            luminanceControl.classList.add('hidden');
+            colorMatchControl.classList.add('hidden');
 
-            if (mode === 'edgeDetection') {
-                lumaLabel.firstChild.textContent = 'EDGE SENSITIVITY';
-                brightnessThresholdSlider.min = 0;
-                brightnessThresholdSlider.max = 255;
-                brightnessThresholdSlider.value = 128;
-                colorMatchControl.classList.add('hidden');
+            if (mode === 'luminance' || mode === 'edgeDetection') {
                 luminanceControl.classList.remove('hidden');
-            } else {
-                 if(mode === 'luminance') {
+                if (mode === 'edgeDetection') {
+                    lumaLabel.firstChild.textContent = 'EDGE SENSITIVITY';
+                    brightnessThresholdSlider.min = 0;
+                    brightnessThresholdSlider.max = 255;
+                    brightnessThresholdSlider.value = 128;
+                } else { // luminance
                     lumaLabel.firstChild.textContent = 'RELATIVE SENSITIVITY';
                     brightnessThresholdSlider.min = -100;
                     brightnessThresholdSlider.max = 200;
-                    brightnessThresholdSlider.value = 0;
-                    colorMatchControl.classList.add('hidden');
-                    luminanceControl.classList.remove('hidden');
-                } else { // colorMatch
-                    luminanceControl.classList.add('hidden');
-                    colorMatchControl.classList.remove('hidden');
+                    brightnessThresholdSlider.value = 80;
                 }
+            } else if (mode === 'colorMatch') {
+                colorMatchControl.classList.remove('hidden');
             }
+            // HSL and Texture modes don't need the extra controls, so they remain hidden.
+
             updateSliderValueDisplays();
             generatePatternForDisplay();
         }
@@ -479,7 +487,7 @@
             let minVal = parseFloat(minShapeScaleSlider.value);
             let maxVal = parseFloat(maxShapeScaleSlider.value);
             if (minVal > maxVal) {
-                if (this === minShapeScaleSlider) maxShapeScaleSlider.value = maxVal;
+                if (this === minShapeScaleSlider) maxShapeScaleSlider.value = minVal;
                 else minShapeScaleSlider.value = minVal;
             }
         }
@@ -505,8 +513,76 @@
             return selected ? selected.value : null;
         }
 
-        // --- Core Drawing Logic ---
+        // --- NEW HELPER FUNCTIONS ---
+
+        // For HSL Analysis Mode
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) {
+                h = s = 0; // achromatic
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return { h, s, l };
+        }
+
+        // For Color Dissimilarity (Texture) Mode
+        function calculateColorDistance(r1, g1, b1, r2, g2, b2) {
+            return Math.sqrt(Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2));
+        }
+
+        function createDissimilarityMap(imageData) {
+            const { data, width, height } = imageData;
+            const dissimilarityData = new Uint8ClampedArray(data.length);
+            let maxDistance = 0;
+            const distances = new Float32Array(data.length / 4);
+
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    const centerIndex = (y * width + x) * 4;
+                    let avgR = 0, avgG = 0, avgB = 0;
+                    for (let j = -1; j <= 1; j++) {
+                        for (let i = -1; i <= 1; i++) {
+                            if (i === 0 && j === 0) continue;
+                            const neighborIndex = ((y + j) * width + (x + i)) * 4;
+                            avgR += data[neighborIndex];
+                            avgG += data[neighborIndex + 1];
+                            avgB += data[neighborIndex + 2];
+                        }
+                    }
+                    avgR /= 8; avgG /= 8; avgB /= 8;
+                    const distance = calculateColorDistance(
+                        data[centerIndex], data[centerIndex+1], data[centerIndex+2],
+                        avgR, avgG, avgB
+                    );
+                    const flatIndex = y * width + x;
+                    distances[flatIndex] = distance;
+                    if (distance > maxDistance) maxDistance = distance;
+                }
+            }
+            
+            if (maxDistance === 0) maxDistance = 1; // Avoid division by zero for solid color images
+            for (let i = 0; i < distances.length; i++) {
+                const normalizedValue = (distances[i] / maxDistance) * 255;
+                const outputIndex = i * 4;
+                dissimilarityData[outputIndex] = normalizedValue;
+                dissimilarityData[outputIndex+1] = normalizedValue;
+                dissimilarityData[outputIndex+2] = normalizedValue;
+                dissimilarityData[outputIndex+3] = 255;
+            }
+            return new ImageData(dissimilarityData, width, height);
+        }
         
+        // --- Core Drawing Logic ---
         function equalizeHistogram() {
             const srcCtx = document.createElement('canvas').getContext('2d');
             srcCtx.canvas.width = originalImage.width;
@@ -601,12 +677,27 @@
             const maxScale = parseFloat(maxShapeScaleSlider.value);
             const invert = invertToggle.checked;
             const analysisMode = analysisModeSelect.value;
-            const targetColor = hexToRgb(colorMatchColorPicker.value);
+            const targetColor = analysisMode === 'colorMatch' ? hexToRgb(colorMatchColorPicker.value) : null;
             const shapeColor = getSelectedRadioValue('shapeColor');
             ctx.fillStyle = shapeColor;
             
-            const imageData = offscreenImageCtx.getImageData(0, 0, offscreenImageCanvas.width, offscreenImageCanvas.height);
-            const data = imageData.data;
+            // --- MODIFIED DATA HANDLING ---
+            const colorCanvas = document.createElement('canvas');
+            colorCanvas.width = originalImage.width;
+            colorCanvas.height = originalImage.height;
+            const colorCtx = colorCanvas.getContext('2d', { willReadFrequently: true });
+            colorCtx.drawImage(originalImage, 0, 0);
+            const originalColorImageData = colorCtx.getImageData(0, 0, originalImage.width, originalImage.height);
+            
+            let processedImageData;
+            if (analysisMode === 'colorDissimilarity') {
+                processedImageData = createDissimilarityMap(originalColorImageData);
+            } else {
+                processedImageData = offscreenImageCtx.getImageData(0, 0, offscreenImageCanvas.width, offscreenImageCanvas.height);
+            }
+            
+            const data = processedImageData.data;
+            const colorData = originalColorImageData.data; // Keep original colors for HSL/ColorMatch
             
             const gridCols = density;
             const gridRows = Math.round(density / currentAspectRatio);
@@ -627,17 +718,50 @@
                             const brightness = data[pixelIndex]; // Already grayscale from equalization
                             const relativeSensitivity = parseInt(brightnessThresholdSlider.value);
                             const sensitivityMultiplier = 1.0 + (relativeSensitivity / 100.0);
-                            
                             const baseStrength = invert ? (brightness / 255.0) : ((255.0 - brightness) / 255.0);
                             
-                            if (baseStrength > 0.01) { // Basic threshold to avoid pure white
+                            if (baseStrength > 0.01) {
                                 strengthFactor = baseStrength * sensitivityMultiplier;
                                 conditionMet = true;
                             }
                             break;
                         }
-                        // Other analysis modes remain as they were
-                        // ...
+                        case 'hslAnalysis': {
+                            const r = colorData[pixelIndex];
+                            const g = colorData[pixelIndex + 1];
+                            const b = colorData[pixelIndex + 2];
+                            const { s, l } = rgbToHsl(r, g, b); // Saturation and Lightness (0 to 1)
+
+                            const saturationWeight = 0.7;
+                            const lightnessWeight = 0.3;
+                            
+                            strengthFactor = (saturationWeight * s) + (lightnessWeight * (1.0 - l));
+                            if (invert) strengthFactor = 1.0 - strengthFactor;
+                            conditionMet = true;
+                            break;
+                        }
+                        case 'colorDissimilarity': {
+                            const textureStrength = data[pixelIndex] / 255.0; // From dissimilarity map
+                            strengthFactor = invert ? (1.0 - textureStrength) : textureStrength;
+                            conditionMet = true;
+                            break;
+                        }
+                        case 'colorMatch': {
+                             const r = colorData[pixelIndex];
+                             const g = colorData[pixelIndex + 1];
+                             const b = colorData[pixelIndex + 2];
+                             const distance = calculateColorDistance(r, g, b, targetColor.r, targetColor.g, targetColor.b);
+                             const threshold = parseInt(colorMatchThresholdSlider.value);
+
+                             // If 'invert' is checked, we draw when the color is FAR from the target
+                             // If 'invert' is not checked, we draw when the color is CLOSE to the target
+                             if ((invert && distance > threshold) || (!invert && distance <= threshold)) {
+                                 strengthFactor = 1.0; // For now, it's all or nothing
+                                 conditionMet = true;
+                             }
+                             break;
+                        }
+                        // Note: Edge detection logic would need to be added here if fully implemented
                     }
 
                     if (conditionMet && strengthFactor > 0) {
