@@ -165,7 +165,7 @@
                         <label for="analysisModeSelect" class="control-label">Analysis Mode</label>
                         <select id="analysisModeSelect" class="select-input">
                             <option value="luminance" selected>Luma Sensitivity</option>
-                            <option value="hslAnalysis">HSL (Colorfulness)</option>
+                            <option value="hslAnalysis">HSL (Lightness)</option>
                             <option value="colorDissimilarity">Texture (Color Variation)</option>
                             <option value="colorMatch">Color Match</option>
                             <option value="edgeDetection">Edge Detection</option>
@@ -434,16 +434,16 @@
                     brightnessThresholdSlider.value = 80;
                     break;
                 case 'hslAnalysis':
-                    lumaLabel.firstChild.textContent = 'SATURATION BIAS';
-                    brightnessThresholdSlider.min = 0;
-                    brightnessThresholdSlider.max = 1;
-                    brightnessThresholdSlider.step = 0.01;
-                    brightnessThresholdSlider.value = 0.7;
+                    lumaLabel.firstChild.textContent = 'INTENSITY';
+                    brightnessThresholdSlider.min = 0.1;
+                    brightnessThresholdSlider.max = 4.0;
+                    brightnessThresholdSlider.step = 0.05;
+                    brightnessThresholdSlider.value = 1.0;
                     break;
                 case 'colorDissimilarity':
                     lumaLabel.firstChild.textContent = 'TEXTURE SENSITIVITY';
                     brightnessThresholdSlider.min = 0.1;
-                    brightnessThresholdSlider.max = 3;
+                    brightnessThresholdSlider.max = 20;
                     brightnessThresholdSlider.step = 0.1;
                     brightnessThresholdSlider.value = 1;
                     break;
@@ -499,8 +499,6 @@
                     brightnessThresholdValueDisplay.textContent = `(${sensitivityValue > 0 ? '+' : ''}${sensitivityValue}%)`;
                     break;
                 case 'hslAnalysis':
-                     brightnessThresholdValueDisplay.textContent = `(${Math.round(sensitivityValue * 100)}%)`;
-                     break;
                 case 'colorDissimilarity':
                      brightnessThresholdValueDisplay.textContent = `(x${sensitivityValue.toFixed(1)})`;
                      break;
@@ -761,12 +759,11 @@
                             const r = colorData[pixelIndex];
                             const g = colorData[pixelIndex + 1];
                             const b = colorData[pixelIndex + 2];
-                            const { s, l } = rgbToHsl(r, g, b);
+                            const { l } = rgbToHsl(r, g, b);
 
-                            const saturationWeight = sensitivity; // Use slider value directly
-                            const lightnessWeight = 1.0 - saturationWeight;
+                            const baseStrength = (1.0 - l); // Purely based on lightness
                             
-                            strengthFactor = (saturationWeight * s) + (lightnessWeight * (1.0 - l));
+                            strengthFactor = Math.pow(baseStrength, sensitivity);
                             if (invert) strengthFactor = 1.0 - strengthFactor;
                             conditionMet = true;
                             break;
