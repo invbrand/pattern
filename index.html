@@ -180,6 +180,12 @@
                         <label for="brightnessThresholdSlider" class="control-label">RELATIVE SENSITIVITY <span id="brightnessThresholdValue" class="slider-value-label">(80%)</span></label>
                         <input type="range" id="brightnessThresholdSlider" min="-100" max="200" value="80" step="1" class="slider w-full">
                     </div>
+
+                    <!-- NEW: Contrast slider, specifically for HSL -->
+                    <div id="hslContrastControl" class="control-group hidden">
+                        <label for="hslContrastSlider" class="control-label">CONTRAST <span id="hslContrastValue" class="slider-value-label">(x1.0)</span></label>
+                        <input type="range" id="hslContrastSlider" min="0.1" max="5.0" value="1.0" step="0.1" class="slider w-full">
+                    </div>
                     
                     <div id="colorMatchControl" class="control-group hidden">
                         <label for="colorMatchThresholdSlider" class="control-label">COLOR THRESHOLD <span id="colorMatchThresholdValue" class="slider-value-label">(50)</span></label>
@@ -278,6 +284,11 @@
         const luminanceControl = document.getElementById('luminanceControl');
         const brightnessThresholdSlider = document.getElementById('brightnessThresholdSlider');
         const brightnessThresholdValueDisplay = document.getElementById('brightnessThresholdValue');
+        
+        const hslContrastControl = document.getElementById('hslContrastControl');
+        const hslContrastSlider = document.getElementById('hslContrastSlider');
+        const hslContrastValue = document.getElementById('hslContrastValue');
+
         const colorMatchControl = document.getElementById('colorMatchControl');
         const colorMatchThresholdSlider = document.getElementById('colorMatchThresholdSlider');
         const colorMatchThresholdValue = document.getElementById('colorMatchThresholdValue');
@@ -313,7 +324,7 @@
         }
 
         function addEventListeners() {
-            const sliders = [patternDensitySlider, randomnessSlider, brightnessThresholdSlider, minShapeScaleSlider, maxShapeScaleSlider, colorMatchThresholdSlider];
+            const sliders = [patternDensitySlider, randomnessSlider, brightnessThresholdSlider, hslContrastSlider, minShapeScaleSlider, maxShapeScaleSlider, colorMatchThresholdSlider];
             sliders.forEach(slider => {
                 slider.addEventListener('input', () => {
                     updateSliderValueDisplays();
@@ -421,6 +432,7 @@
             // Hide all special controls first
             luminanceControl.classList.add('hidden');
             colorMatchControl.classList.add('hidden');
+            hslContrastControl.classList.add('hidden');
             
             // Default to showing the main sensitivity slider
             luminanceControl.classList.remove('hidden');
@@ -438,7 +450,8 @@
                     brightnessThresholdSlider.min = 0.1;
                     brightnessThresholdSlider.max = 4.0;
                     brightnessThresholdSlider.step = 0.05;
-                    brightnessThresholdSlider.value = 1.0;
+                    brightnessThresholdSlider.value = 1.5; // Good starting point
+                    hslContrastControl.classList.remove('hidden'); // Show contrast slider
                     break;
                 case 'colorDissimilarity':
                     lumaLabel.firstChild.textContent = 'TEXTURE SENSITIVITY';
@@ -493,12 +506,16 @@
             
             const mode = analysisModeSelect.value;
             const sensitivityValue = parseFloat(brightnessThresholdSlider.value);
+            const contrastValue = parseFloat(hslContrastSlider.value);
 
             switch(mode) {
                 case 'luminance':
                     brightnessThresholdValueDisplay.textContent = `(${sensitivityValue > 0 ? '+' : ''}${sensitivityValue}%)`;
                     break;
                 case 'hslAnalysis':
+                     brightnessThresholdValueDisplay.textContent = `(x${sensitivityValue.toFixed(1)})`;
+                     hslContrastValue.textContent = `(x${contrastValue.toFixed(1)})`;
+                     break;
                 case 'colorDissimilarity':
                      brightnessThresholdValueDisplay.textContent = `(x${sensitivityValue.toFixed(1)})`;
                      break;
@@ -542,7 +559,7 @@
             return selected ? selected.value : null;
         }
 
-        // --- NEW HELPER FUNCTIONS ---
+        // --- HELPER FUNCTIONS ---
 
         // For HSL Analysis Mode
         function rgbToHsl(r, g, b) {
@@ -707,6 +724,7 @@
             const invert = invertToggle.checked;
             const analysisMode = analysisModeSelect.value;
             const sensitivity = parseFloat(brightnessThresholdSlider.value);
+            const contrast = parseFloat(hslContrastSlider.value);
             const targetColor = analysisMode === 'colorMatch' ? hexToRgb(colorMatchColorPicker.value) : null;
             const shapeColor = getSelectedRadioValue('shapeColor');
             ctx.fillStyle = shapeColor;
@@ -761,9 +779,16 @@
                             const b = colorData[pixelIndex + 2];
                             const { l } = rgbToHsl(r, g, b);
 
-                            const baseStrength = (1.0 - l); // Purely based on lightness
+                            let baseStrength = (1.0 - l);
                             
-                            strengthFactor = Math.pow(baseStrength, sensitivity);
+                            // Apply Intensity
+                            baseStrength = Math.pow(baseStrength, sensitivity);
+                            
+                            // Apply Contrast
+                            const contrastFactor = contrast;
+                            baseStrength = 0.5 + contrastFactor * (baseStrength - 0.5);
+
+                            strengthFactor = baseStrength;
                             if (invert) strengthFactor = 1.0 - strengthFactor;
                             conditionMet = true;
                             break;
